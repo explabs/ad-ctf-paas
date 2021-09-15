@@ -21,13 +21,15 @@ resource "libvirt_pool" "ubuntu" {
 
 # We fetch the latest ubuntu release image from their mirrors
 resource "libvirt_volume" "ubuntu-qcow2" {
-  name = "ubuntu-qcow2"
+  count = length(var.hostnames)
+  name = "ubuntu-qcow2.${var.hostnames[count.index]}"
   pool = libvirt_pool.ubuntu.name
   source = "${abspath(path.module)}/focal-server-cloudimg-amd64.img"
   format = "qcow2"
 }
 
 data "template_file" "user_data" {
+  count = length(var.hostnames)
   template = file("${path.module}/config/init.yml")
 }
 
@@ -37,18 +39,20 @@ data "template_file" "user_data" {
 # Use CloudInit to add our ssh-key to the instance
 # you can add also meta_data field
 resource "libvirt_cloudinit_disk" "commoninit" {
-  name = "commoninit.iso"
-  user_data = data.template_file.user_data.rendered
+  count = length(var.hostnames)
+  name = "${var.hostnames[count.index]}-commoninit.iso"
+  user_data = data.template_file.user_data[count.index].rendered
   pool = libvirt_pool.ubuntu.name
 }
 
 # Create the machine
 resource "libvirt_domain" "domain-ubuntu" {
-  name = "ubuntu-terraform"
+  count = length(var.hostnames)
+  name = "${var.hostnames[count.index]}"
   memory = "2048"
   vcpu = 1
   qemu_agent = true
-  cloudinit = libvirt_cloudinit_disk.commoninit.id
+  cloudinit = libvirt_cloudinit_disk.commoninit[count.index].id
 
   network_interface {
     network_name = "default"
@@ -71,7 +75,7 @@ resource "libvirt_domain" "domain-ubuntu" {
   }
 
   disk {
-    volume_id = libvirt_volume.ubuntu-qcow2.id
+    volume_id = element(libvirt_volume.ubuntu-qcow2.*.id, count.index)
   }
 
   graphics {

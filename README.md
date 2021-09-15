@@ -23,3 +23,6 @@ terraform plan
 terraform apply
 ```
 For destroy infrastructure use `terraform destroy`
+
+## Troubleshooting
+If you encounter with `Could not open <path_to_file>: Permission denied` double check that `security_driver = "none"` is uncommented in `/etc/libvirt/qemu.conf` and issue `sudo systemctl restart libvirtd` to restart the daemon.
