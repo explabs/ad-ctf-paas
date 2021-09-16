@@ -13,18 +13,18 @@ provider "libvirt" {
   uri = "qemu:///system"
 }
 
-resource "libvirt_pool" "ubuntu" {
-  name = "ubuntu"
+resource "libvirt_pool" "os_pools" {
+  name = "vm"
   type = "dir"
-  path = "${abspath(path.module)}/pool-ubuntu"
+  path = var.libvirt_path_pool
 }
 
 # We fetch the latest ubuntu release image from their mirrors
-resource "libvirt_volume" "ubuntu-qcow2" {
+resource "libvirt_volume" "os-qcow2" {
   count = length(var.hostnames)
-  name = "ubuntu-qcow2.${var.hostnames[count.index]}"
-  pool = libvirt_pool.ubuntu.name
-  source = "${abspath(path.module)}/focal-server-cloudimg-amd64.img"
+  name = "${var.hostnames[count.index]}-qcow2"
+  pool = libvirt_pool.os_pools.name
+  source = format("${var.os_images_path}%s", var.os_images[count.index])
   format = "qcow2"
 }
 
@@ -42,11 +42,21 @@ resource "libvirt_cloudinit_disk" "commoninit" {
   count = length(var.hostnames)
   name = "${var.hostnames[count.index]}-commoninit.iso"
   user_data = data.template_file.user_data[count.index].rendered
-  pool = libvirt_pool.ubuntu.name
+  pool = libvirt_pool.os_pools.name
+}
+
+resource "libvirt_network" "local-kvm" {
+  name = "local-kvmnet"
+  mode = "nat"
+  domain = "local-kvm"
+  addresses = ["10.10.10.0/28"]
+  dhcp {
+    enabled = true
+  }
 }
 
 # Create the machine
-resource "libvirt_domain" "domain-ubuntu" {
+resource "libvirt_domain" "os-domain" {
   count = length(var.hostnames)
   name = "${var.hostnames[count.index]}"
   memory = "2048"
@@ -55,8 +65,9 @@ resource "libvirt_domain" "domain-ubuntu" {
   cloudinit = libvirt_cloudinit_disk.commoninit[count.index].id
 
   network_interface {
-    network_name = "default"
+    network_id = "${libvirt_network.local-kvm.id}"
     wait_for_lease = true
+   
   }
 
   # IMPORTANT: this is a known bug on cloud images, since they expect a console
@@ -75,7 +86,7 @@ resource "libvirt_domain" "domain-ubuntu" {
   }
 
   disk {
-    volume_id = element(libvirt_volume.ubuntu-qcow2.*.id, count.index)
+    volume_id = element(libvirt_volume.os-qcow2.*.id, count.index)
   }
 
   graphics {
@@ -83,9 +94,25 @@ resource "libvirt_domain" "domain-ubuntu" {
     listen_type = "address"
     autoport = true
   }
+#   provisioner "remote-exec" {
+#     inline = [
+#       "echo hello"
+#     ]
+
+#     connection {
+#       type        = "ssh"
+#       user        = var.ssh_username
+#       host        = libvirt_domain.os-domain[0].network_interface[0].addresses[0]
+#       private_key = file("${path.module}/user_rsa")
+#     }   
+#   }
+#   provisioner "local-exec" {
+#       command = "ansible-playbook -u ${var.ssh_username} --private-key /home/fral/projects/ad-infrastructure/user_rsa /home/fral/projects/ad-infrastructure/ansible/playbook.yml"
+#   }
+
 }
 
 # IPs: use wait_for_lease true or after creation use terraform refresh and terraform show for the ips of domain
 output "hostnames" {
-  value = "${libvirt_domain.domain-ubuntu.*}"
+  value = "${libvirt_domain.os-domain.*}"
 }

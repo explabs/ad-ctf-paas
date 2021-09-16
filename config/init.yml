@@ -12,3 +12,11 @@ users:
     sudo: ['ALL=(ALL) NOPASSWD:ALL']
     shell: /bin/bash
     groups: wheel
+
+
+packages:
+  - python38
+
+package_update: true
+package_upgrade: true
+package_reboot_if_required: true
