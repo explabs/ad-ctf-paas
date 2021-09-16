@@ -1,0 +1,21 @@
+- become: yes
+  hosts: all
+  tasks:
+    - name: Install auditd
+      apt:
+        pkg:
+          - auditd
+          - audispd-plugins
+
+    - name: check if auditd service is running
+      ansible.builtin.systemd:
+        state: started
+        name: auditd
+    
+    - name: Enable auditd service 
+      ansible.builtin.systemd:
+        name: auditd
+        enabled: yes
+        
+
+    
