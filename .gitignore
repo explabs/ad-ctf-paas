@@ -1,0 +1,6 @@
+focal-server-cloudimg-amd64.img
+terraform.tfstate
+terraform.tfstate.backup
+.terraform/
+.terraform.lock.hcl
+data/

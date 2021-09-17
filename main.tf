@@ -16,7 +16,7 @@ provider "libvirt" {
 resource "libvirt_pool" "os_pools" {
   name = "vm"
   type = "dir"
-  path = var.libvirt_path_pool
+  path = "${abspath(path.module)}/data/"
 }
 
 # We fetch the latest ubuntu release image from their mirrors
@@ -24,7 +24,7 @@ resource "libvirt_volume" "os-qcow2" {
   count = length(var.hostnames)
   name = "${var.hostnames[count.index]}-qcow2"
   pool = libvirt_pool.os_pools.name
-  source = format("${var.os_images_path}%s", var.os_images[count.index])
+  source = "${abspath(path.module)}/${var.os_images[count.index]}"
   format = "qcow2"
 }
 
