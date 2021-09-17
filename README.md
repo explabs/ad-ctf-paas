@@ -35,3 +35,11 @@ ssh -i user_rsa user@ip
 ```
 ## Troubleshooting
 If you encounter with `Could not open <path_to_file>: Permission denied` double check that `security_driver = "none"` is uncommented in `/etc/libvirt/qemu.conf` and issue `sudo systemctl restart libvirtd` to restart the daemon.
+
+
+## Auditd
+
+To show USER_CMD `cmd` field use follow command on VM:
+```
+sudo ausearch -ua soc -m USER_CMD | grep cmd | awk '{print $8}' | cut -c 5- |  while read line; do echo $line | xxd -r -p; echo; done
+```
