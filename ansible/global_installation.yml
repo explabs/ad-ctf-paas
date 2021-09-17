@@ -1,6 +1,7 @@
-- name: Configure auditd service
+- name: Configure global preferences
   hosts: all
-  gather_facts: false
+  gather_facts: true
+  serial: 1
   become: true
   
   roles:
