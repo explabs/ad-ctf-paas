@@ -28,11 +28,6 @@ resource "libvirt_volume" "os-qcow2" {
   format = "qcow2"
 }
 
-data "template_file" "user_data" {
-  count = length(var.hostnames)
-  template = file("${path.module}/config/init.yml")
-}
-
 
 # for more info about paramater check this out
 # https://github.com/dmacvicar/terraform-provider-libvirt/blob/master/website/docs/r/cloudinit.html.markdown
@@ -41,37 +36,36 @@ data "template_file" "user_data" {
 resource "libvirt_cloudinit_disk" "commoninit" {
   count = length(var.hostnames)
   name = "${var.hostnames[count.index]}-commoninit.iso"
-  user_data = data.template_file.user_data[count.index].rendered
   pool = libvirt_pool.os_pools.name
-}
-
-resource "libvirt_network" "local-kvm" {
-  name = "local-kvmnet"
-  mode = "nat"
-  domain = "local-kvm"
-  addresses = ["10.10.10.0/28"]
-  dhcp {
-    enabled = true
-  }
-  dns {
-    enabled = true
-  }
+  user_data = templatefile("${path.module}/config/init.yml", {
+    host_name = var.hostnames[count.index]
+    auth_key = var.ssh_keys[count.index]
+    name = var.ssh_username[count.index]
+  })
+  network_config = templatefile("${path.module}/config/network_config.yml", {
+    interface = var.interface
+    ip_addr = var.ips[count.index]
+    mac_addr = var.macs[count.index]
+  })
 }
 
 # Create the machine
 resource "libvirt_domain" "os-domain" {
   count = length(var.hostnames)
-  name = "${var.hostnames[count.index]}"
-  memory = "2048"
-  vcpu = 1
+  name = var.hostnames[count.index]
+  memory = var.memory
+  vcpu = var.vcpu
   qemu_agent = true
   cloudinit = libvirt_cloudinit_disk.commoninit[count.index].id
 
   network_interface {
-    network_id = "${libvirt_network.local-kvm.id}"
-    wait_for_lease = true
-   
+    network_name = "default"
+    addresses = [
+      var.ips[count.index]
+    ]
+    mac = var.macs[count.index]
   }
+
 
   # IMPORTANT: this is a known bug on cloud images, since they expect a console
   # we need to pass it
@@ -97,25 +91,4 @@ resource "libvirt_domain" "os-domain" {
     listen_type = "address"
     autoport = true
   }
-#   provisioner "remote-exec" {
-#     inline = [
-#       "echo hello"
-#     ]
-
-#     connection {
-#       type        = "ssh"
-#       user        = var.ssh_username
-#       host        = libvirt_domain.os-domain[0].network_interface[0].addresses[0]
-#       private_key = file("${path.module}/user_rsa")
-#     }   
-#   }
-#   provisioner "local-exec" {
-#       command = "ansible-playbook -u ${var.ssh_username} --private-key /home/fral/projects/ad-infrastructure/user_rsa /home/fral/projects/ad-infrastructure/ansible/playbook.yml"
-#   }
-
-}
-
-# IPs: use wait_for_lease true or after creation use terraform refresh and terraform show for the ips of domain
-output "hostnames" {
-  value = "${libvirt_domain.os-domain.*}"
 }
