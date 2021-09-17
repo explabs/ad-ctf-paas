@@ -1,0 +1,9 @@
+- name: Configure auditd service
+  hosts: all
+  gather_facts: false
+  become: true
+  
+  roles:
+    - auditd
+
+    

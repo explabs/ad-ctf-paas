@@ -12,3 +12,10 @@ users:
     sudo: ['ALL=(ALL) NOPASSWD:ALL']
     shell: /bin/bash
     groups: wheel
+
+manage_resolv_conf: true
+resolv_conf:
+    nameservers: ['8.8.4.4', '8.8.8.8']
+    options:
+        rotate: true
+        timeout: 1

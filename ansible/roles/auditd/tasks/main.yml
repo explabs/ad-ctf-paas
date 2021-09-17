@@ -1,0 +1,15 @@
+- name: Install auditd service
+  apt:
+    pkg:
+      - auditd
+    update_cache: yes
+
+- name: Check auditd service status
+  ansible.builtin.systemd:
+    state: started
+    name: auditd
+
+- name: Enable auditd service
+  ansible.builtin.systemd:
+    name: auditd
+    enabled: yes

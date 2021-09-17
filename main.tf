@@ -53,6 +53,9 @@ resource "libvirt_network" "local-kvm" {
   dhcp {
     enabled = true
   }
+  dns {
+    enabled = true
+  }
 }
 
 # Create the machine
