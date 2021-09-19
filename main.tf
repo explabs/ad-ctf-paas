@@ -21,8 +21,8 @@ resource "libvirt_pool" "os_pools" {
 
 # We fetch the latest ubuntu release image from their mirrors
 resource "libvirt_volume" "os-qcow2" {
-  count = length(var.hostnames)
-  name = "${var.hostnames[count.index]}-qcow2"
+  count = length(var.teams)
+  name = "${var.teams[count.index]}-qcow2"
   pool = libvirt_pool.os_pools.name
   source = "${abspath(path.module)}/${var.os_images[count.index]}"
   format = "qcow2"
@@ -34,13 +34,13 @@ resource "libvirt_volume" "os-qcow2" {
 # Use CloudInit to add our ssh-key to the instance
 # you can add also meta_data field
 resource "libvirt_cloudinit_disk" "commoninit" {
-  count = length(var.hostnames)
-  name = "${var.hostnames[count.index]}-commoninit.iso"
+  count = length(var.teams)
+  name = "${var.teams[count.index]}-commoninit.iso"
   pool = libvirt_pool.os_pools.name
   user_data = templatefile("${path.module}/config/init.yml", {
-    host_name = var.hostnames[count.index]
-    auth_key = var.ssh_keys[count.index]
-    name = var.ssh_username[count.index]
+    host_name = var.teams[count.index]
+    auth_key = file("${abspath(path.module)}/keys/${var.teams[count.index]}.pub")
+    name = var.teams[count.index]
   })
   network_config = templatefile("${path.module}/config/network_config.yml", {
     interface = var.interface
@@ -51,8 +51,8 @@ resource "libvirt_cloudinit_disk" "commoninit" {
 
 # Create the machine
 resource "libvirt_domain" "os-domain" {
-  count = length(var.hostnames)
-  name = var.hostnames[count.index]
+  count = length(var.teams)
+  name = var.teams[count.index]
   memory = var.memory
   vcpu = var.vcpu
   qemu_agent = true
