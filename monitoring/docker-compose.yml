@@ -1,0 +1,78 @@
+version: '3'
+services:
+  test-node1:
+    image: amazon/opendistro-for-elasticsearch:1.13.2
+    container_name: test-node1
+    environment:
+      - cluster.name=test-cluster
+      - node.name=test-node1
+      - discovery.seed_hosts=test-node1,test-node2
+      - cluster.initial_master_nodes=test-node1,test-node2
+      - bootstrap.memory_lock=true # along with the memlock settings below, disables swapping
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m" # minimum and maximum Java heap size, recommend setting both to 50% of system RAM
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536 # maximum number of open files for the Elasticsearch user, set to at least 65536 on modern systems
+        hard: 65536
+    volumes:
+      - test-data1:/usr/share/elasticsearch/data
+    ports:
+      - "9200:9200"
+      - "9600:9600"
+    networks:
+      - test-net
+  test-node2:
+    image: amazon/opendistro-for-elasticsearch:1.13.2
+    container_name: test-node2
+    environment:
+      - cluster.name=test-cluster
+      - node.name=test-node2
+      - discovery.seed_hosts=test-node1,test-node2
+      - cluster.initial_master_nodes=test-node1,test-node2
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
+    volumes:
+      - test-data2:/usr/share/elasticsearch/data
+    networks:
+      - test-net
+  test-kibana:
+    image: amazon/opendistro-for-elasticsearch-kibana:1.13.2
+    container_name: test-kibana
+    ports:
+      - "5601:5601"
+    expose:
+      - "5601"
+    environment:
+      ELASTICSEARCH_URL: https://test-node1:9200
+      ELASTICSEARCH_HOSTS: https://test-node1:9200
+    networks:
+      - test-net
+  logstash:
+    image: docker.elastic.co/logstash/logstash-oss:7.14.1
+    volumes:
+      - ./network/logstash.conf:/usr/share/logstash/pipeline/logstash.conf:ro
+    ports:
+      - "5044:5044"
+    environment:
+      LS_JAVA_OPTS: "-Xmx256m -Xms256m"
+    depends_on:
+      - test-node1
+    networks:
+      - test-net
+
+volumes:
+  test-data1:
+  test-data2:
+
+networks:
+  test-net:

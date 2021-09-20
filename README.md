@@ -36,8 +36,38 @@ ssh -i user_rsa user@ip
 ## Troubleshooting
 If you encounter with `Could not open <path_to_file>: Permission denied` double check that `security_driver = "none"` is uncommented in `/etc/libvirt/qemu.conf` and issue `sudo systemctl restart libvirtd` to restart the daemon.
 
+## Monitoring
+### OpenDistro
+#### Run service
+```
+sudo sysctl -w vm.max_map_count=262144
+docker-compose up -d
+```
+### Packetbeat
+Network monitoring for elasticsearch
 
-## Auditd
+[Documentation](https://www.elastic.co/guide/en/beats/packetbeat/current/index.html)
+#### Download
+```
+curl -L -O https://artifacts.elastic.co/downloads/beats/packetbeat/packetbeat-7.14.1-amd64.deb
+sudo dpkg -i packetbeat-7.14.1-amd64.deb
+```
+#### Run
+Copy packetbeat config
+```
+cp monitoring/network/packetbeat.yml /etc/packetbeat/packetbeat.yml
+```
+Install Dashboards
+```
+sudo packetbeat setup --dashboards
+```
+Run packetbeat
+```
+sudo packetbeat  -e
+```
+
+
+### Auditd
 
 To show USER_CMD `cmd` field use follow command on VM:
 ```
