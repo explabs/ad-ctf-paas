@@ -70,6 +70,29 @@ services:
     networks:
       - test-net
 
+  prometheus:
+    image: prom/prometheus
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./data/prometheus:/data
+    ports:
+      - "9090:9090"
+    restart: always
+    networks:
+      - test-net
+
+  grafana:
+    image: grafana/grafana:latest
+    volumes:
+      - ./grafana/grafana.ini:/etc/grafana/grafana.ini
+      - ./grafana/datasource.yml:/etc/grafana/provisioning/datasources/datasource.yaml
+    ports:
+      - "3000:3000"
+    links:
+      - prometheus
+    networks:
+      - test-net
+
 volumes:
   test-data1:
   test-data2:
