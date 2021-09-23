@@ -3,8 +3,7 @@
   gather_facts: true
   serial: 1
   become: true
-  
+
   roles:
     - auditd
-
-    
+    - docker
