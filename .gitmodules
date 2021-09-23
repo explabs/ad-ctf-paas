@@ -1,0 +1,3 @@
+[submodule "ad-infrastructure-api"]
+	path = ad-infrastructure-api
+	url = git@github.com:Ivanhahanov/ad-infrastructure-api.git
