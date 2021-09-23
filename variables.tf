@@ -10,7 +10,7 @@ variable "interface" {
   default = "ens01"
 }
 variable "memory" {
-  default = "2048"
+ default = "2048"
 }
 variable "vcpu" {
   default = 2

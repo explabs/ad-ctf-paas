@@ -1,0 +1,23 @@
+- name: Install ELK-stack with Grafana and Prometheus
+  hosts: administrator
+  gather_facts: true
+  serial: 1
+  become: true
+
+  tasks:
+    - name: Copy monitoring dir to remote server
+      copy:
+        src: ../monitoring/
+        dest: /home/administrator/monitoring/
+
+    - name: OpenDistro max_map_count
+      sysctl:
+        name: vm.max_map_count
+        value: 262144
+
+
+    - name: Deploy docker-compose
+      docker_compose:
+        project_src: /home/administrator/monitoring/
+        files:
+          - docker-compose.yml
