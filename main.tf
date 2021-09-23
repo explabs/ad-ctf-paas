@@ -63,6 +63,7 @@ resource "libvirt_domain" "os-domain" {
     addresses = [
       var.ips[count.index]
     ]
+
     mac = var.macs[count.index]
   }
 

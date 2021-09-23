@@ -1,0 +1,8 @@
+- name: Auditbeat installation
+  hosts: naliway, nakateam
+  gather_facts: true
+  serial: 1
+  become: true
+
+  roles:
+    - auditbeat

@@ -5,5 +5,4 @@
   become: true
 
   roles:
-    - auditd
     - docker
