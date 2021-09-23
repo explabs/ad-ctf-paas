@@ -10,10 +10,10 @@ variable "interface" {
   default = "ens01"
 }
 variable "memory" {
- default = "512"
+ default = "2048"
 }
 variable "vcpu" {
-  default = 1
+  default = 2
 }
 
 variable "macs" {

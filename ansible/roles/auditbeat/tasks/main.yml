@@ -25,3 +25,9 @@
   ansible.builtin.systemd:
     name: auditbeat
     enabled: yes
+
+- name: Replace auditbeat.yml with custom
+  ansible.builtin.copy:
+    src: ../auditbeat.yml
+    dest: /etc/auditbeat/auditbeat.yml
+    mode: '664'

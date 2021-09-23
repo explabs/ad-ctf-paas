@@ -1,6 +1,6 @@
 - name: Install all dependecies
   apt:
-    name: "{{item}}"
+    name: "{{ item }}"
     state: present
     update_cache: yes
   loop:
@@ -9,6 +9,8 @@
     - curl
     - gnupg-agent
     - software-properties-common
+    - python3-pip
+    - python3-setuptools
 
 - name: Add Docker GPG apt Key
   apt_key:
@@ -22,6 +24,14 @@
 
 - name: Update apt and install docker-ce
   apt: update_cache=yes name=docker-ce state=latest
+
+- name: Install Docker and Docker-Compose Modules for Python
+  pip:
+    name: 
+      - docker
+      - docker-compose
+
+
 
 - name: Install docker-compose
   get_url:
