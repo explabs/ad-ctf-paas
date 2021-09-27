@@ -1,0 +1,7 @@
+version: "3"
+services:
+  example-task:
+    build:
+      context: example_task
+    ports:
+      - "3000:80"
