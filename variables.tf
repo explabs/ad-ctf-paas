@@ -3,7 +3,6 @@ variable "os_images" {
   default     = [
     "focal-server-cloudimg-amd64.img",
     "focal-server-cloudimg-amd64.img",
-    "focal-server-cloudimg-amd64.img",
   ]
 }
 variable "interface" {
