@@ -1,9 +1,10 @@
-- name: Auditbeat, packetbeat installation and configuration
+- name: Auditbeat, packetbeat, docker installation and configuration
   hosts: naliway, nakateam
   gather_facts: true
   serial: 1
   become: true
 
   roles:
+    - docker
     - auditbeat
     - packetbeat

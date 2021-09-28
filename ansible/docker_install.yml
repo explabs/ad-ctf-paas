@@ -1,8 +1,0 @@
-- name: Configure global preferences
-  hosts: all
-  gather_facts: true
-  serial: 1
-  become: true
-
-  roles:
-    - docker
