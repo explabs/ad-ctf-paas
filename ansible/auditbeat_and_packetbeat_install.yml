@@ -1,4 +1,4 @@
-- name: Auditbeat installation and configuration
+- name: Auditbeat, packetbeat installation and configuration
   hosts: naliway, nakateam
   gather_facts: true
   serial: 1
@@ -6,3 +6,4 @@
 
   roles:
     - auditbeat
+    - packetbeat

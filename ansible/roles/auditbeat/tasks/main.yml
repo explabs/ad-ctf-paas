@@ -1,4 +1,4 @@
-- name: Download and install Public Signign Key
+- name: Download and install Public Signign Key(Auditbeat)
   shell: wget -qO - https://artifacts.elastic.co/GPG-KEY-elasticsearch | sudo apt-key add -
 
 - name: Install https
