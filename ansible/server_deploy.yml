@@ -1,0 +1,26 @@
+- name: Deploy all infrastructure on server
+  hosts: monitoring_server
+  gather_facts: true
+  serial: 1
+  become: true
+
+  tasks:
+    - name: Install docker and docker-compose on monitoring_server
+      roles:
+        - docker
+
+    - name: Install KVM and libvrt
+      apt:
+        name: "{{ item }}"
+        state: present
+        update_cache: yes
+      loop:
+        - cpu-checker
+        - qemu-kvm
+        - libvirt-daemon-system
+        - libvirt-clients
+        - bridge-utils
+      when: egrep -c '(vmx|svm)' /proc/cpuinfo
+      command: adduser
+
+    - name:
