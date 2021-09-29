@@ -7,8 +7,12 @@ scrape_configs:
     static_configs:
       - targets:
           - localhost:9090
-  - job_name: walker
-    metrics_path: api/v1/walker
+      
+  - job_name: checker
+    metrics_path: api/v1/checker
     static_configs:
       - targets:
-          - 192.168.100.105:8080
+          - 192.168.31.129:8080
+    basic_auth:
+      username: 'checker'
+      password: 'test'
