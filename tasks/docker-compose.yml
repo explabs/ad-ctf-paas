@@ -4,4 +4,4 @@ services:
     build:
       context: example_task
     ports:
-      - "3000:80"
+      - "3333:80"

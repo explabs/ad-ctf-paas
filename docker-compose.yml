@@ -146,22 +146,7 @@ services:
     build:
       context: ovpn-admin
     image: ovpn-admin:local
-    command:
-      /app/ovpn-admin
-      --debug
-      --listen.host="0.0.0.0"
-      --listen.port="9000"
-      --ovpn.network="192.168.122.0/24"
-      --easyrsa.path="/mnt/easyrsa"
-      --easyrsa.index-path="/mnt/easyrsa/pki/index.txt"
-      --ovpn.server="${SERVER_IP}:7777:tcp"
-      --ccd --ccd.path="/mnt/ccd"
-      --role="master"
-      --master.host="http://0.0.0.0:9000"
-      --master.basic-auth.user="adminexplabs"
-      --master.basic-auth.password="explabsexplabs"
-      --auth.password
-      --auth.db="/mnt/easyrsa/pki/users.db"
+    command: /app/ovpn-admin --listen.port="9000" --ovpn.server="${SERVER_IP}:7777:tcp" --easyrsa.path="/mnt/easyrsa" --easyrsa.index-path="/mnt/easyrsa/pki/index.txt" --ccd --ccd.path="/mnt/ccd" --auth.password --auth.db="/mnt/easyrsa/pki/users.db"
     network_mode: service:openvpn
     volumes:
       - ./openvpn/easyrsa_master:/mnt/easyrsa
