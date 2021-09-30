@@ -27,7 +27,7 @@
 
 - name: Install Docker and Docker-Compose Modules for Python
   pip:
-    name: 
+    name:
       - docker
       - docker-compose
 
