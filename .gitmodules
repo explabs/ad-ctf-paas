@@ -1,3 +1,6 @@
 [submodule "ad-infrastructure-api"]
 	path = ad-infrastructure-api
 	url = https://github.com/Ivanhahanov/ad-infrastructure-api.git
+[submodule "ovpn-admin"]
+	path = ovpn-admin
+	url = https://github.com/flant/ovpn-admin.git

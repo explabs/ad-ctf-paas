@@ -1,0 +1,175 @@
+version: '3'
+services:
+  ad-api:
+    build:
+      context: ad-infrastructure-api
+    container_name: ad-api
+    environment:
+      - SERVER_IP=${SERVER_IP}
+      - PROMETHEUS=http://prometheus:9090
+      - OVPN_ADMIN=http://openvpn:9000
+      - MONGODB=mongodb://mongo:27017
+      - REDIS=redis:6379
+    ports:
+      - "80:8080"
+    volumes:
+      - ./terraform/:/terraform
+      - ./ad-infrastructure-api/config.yml:/api/config.yml
+      - ./ad-infrastructure-api/walker.yml:/api/walker.yml
+      - ./ad-infrastructure-api/checker.yml:/api/checker.yml
+
+  mongo:
+    image: mongo:5.0
+    container_name: mongo
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: ${ADMIN_PASS}
+    ports:
+      - "27017:27017"
+
+  redis:
+    image: redis:6.2-alpine
+    command: redis-server --requirepass ${ADMIN_PASS}
+    ports:
+      - "6379:6379"
+
+  test-node1:
+    image: amazon/opendistro-for-elasticsearch:1.13.2
+    container_name: test-node1
+    environment:
+      - cluster.name=test-cluster
+      - node.name=test-node1
+      - discovery.seed_hosts=test-node1,test-node2
+      - cluster.initial_master_nodes=test-node1,test-node2
+      - bootstrap.memory_lock=true # along with the memlock settings below, disables swapping
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m" # minimum and maximum Java heap size, recommend setting both to 50% of system RAM
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536 # maximum number of open files for the Elasticsearch user, set to at least 65536 on modern systems
+        hard: 65536
+    volumes:
+      - test-data1:/usr/share/elasticsearch/data
+    ports:
+      - "9200:9200"
+      - "9600:9600"
+    networks:
+      - test-net
+  test-node2:
+    image: amazon/opendistro-for-elasticsearch:1.13.2
+    container_name: test-node2
+    environment:
+      - cluster.name=test-cluster
+      - node.name=test-node2
+      - discovery.seed_hosts=test-node1,test-node2
+      - cluster.initial_master_nodes=test-node1,test-node2
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
+    volumes:
+      - test-data2:/usr/share/elasticsearch/data
+    networks:
+      - test-net
+  test-kibana:
+    image: amazon/opendistro-for-elasticsearch-kibana:1.13.2
+    container_name: test-kibana
+    ports:
+      - "5601:5601"
+    expose:
+      - "5601"
+    environment:
+      ELASTICSEARCH_URL: https://test-node1:9200
+      ELASTICSEARCH_HOSTS: https://test-node1:9200
+    networks:
+      - test-net
+  logstash:
+    image: docker.elastic.co/logstash/logstash-oss:7.14.1
+    volumes:
+      - ./monitoring/network/logstash.conf:/usr/share/logstash/pipeline/logstash.conf:ro
+    ports:
+      - "5044:5044"
+    environment:
+      LS_JAVA_OPTS: "-Xmx256m -Xms256m"
+    depends_on:
+      - test-node1
+    networks:
+      - test-net
+
+  prometheus:
+    image: prom/prometheus
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./monitoring/data/prometheus:/data
+    ports:
+      - "9090:9090"
+    restart: unless-stopped
+    networks:
+      - test-net
+
+  grafana:
+    image: grafana/grafana:latest
+    volumes:
+      - ./monitoring/grafana/grafana.ini:/etc/grafana/grafana.ini
+      - ./monitoring/grafana/datasource.yml:/etc/grafana/provisioning/datasources/datasource.yaml
+    ports:
+      - "3000:3000"
+    links:
+      - prometheus
+    networks:
+      - test-net
+
+  openvpn:
+    build:
+      context: ovpn-admin
+      dockerfile: Dockerfile.openvpn
+    image: openvpn:local
+    command: /etc/openvpn/setup/configure.sh
+    cap_add:
+      - NET_ADMIN
+    ports:
+      - "7777:1194" # for openvpn
+      - "9000:9000" # for ovpn-admin because of network_mode
+    volumes:
+      - ./openvpn/easyrsa_master:/etc/openvpn/easyrsa
+      - ./openvpn/ccd_master:/etc/openvpn/ccd
+
+  ovpn-admin:
+    build:
+      context: ovpn-admin
+    image: ovpn-admin:local
+    command:
+      /app/ovpn-admin
+      --debug
+      --listen.host="0.0.0.0"
+      --listen.port="9000"
+      --ovpn.network="192.168.122.0/24"
+      --easyrsa.path="/mnt/easyrsa"
+      --easyrsa.index-path="/mnt/easyrsa/pki/index.txt"
+      --ovpn.server="${SERVER_IP}:7777:tcp"
+      --ccd --ccd.path="/mnt/ccd"
+      --role="master"
+      --master.host="http://0.0.0.0:9000"
+      --master.basic-auth.user="adminexplabs"
+      --master.basic-auth.password="explabsexplabs"
+      --auth.password
+      --auth.db="/mnt/easyrsa/pki/users.db"
+    network_mode: service:openvpn
+    volumes:
+      - ./openvpn/easyrsa_master:/mnt/easyrsa
+      - ./openvpn/ccd_master:/mnt/ccd
+
+volumes:
+  test-data1:
+  test-data2:
+
+networks:
+  test-net:
