@@ -63,16 +63,6 @@
         update_cache: yes
         name: terraform
 
-    # - name: Check status of services
-    #   command: systemctl status "{{ item }}"
-    #   with_items:
-    #     - libvirtd
-    #     - sshd
-    #   command: terraform -help
-    #   command: "{{ item }}" --version
-    #   with_items:
-    #     - docker
-    #     - docker-compose
     - name: Create ad-infrastructure dir on monitoring_server
       file:
         path: ~/ad-infrastructure
@@ -94,5 +84,30 @@
         - teams.tf
         - user_rsa
         - variables.tf
+        - docker-compose.yml
 
-  # - name: Download
+    - name: Download .iso image
+      get_url:
+        url:  '{{ wget_image }}'
+        dest: /home/{{ user }}/ad-infrastructure/
+
+    - name: Resize .iso image
+      shell: qemu-img resize '{{ iso_image }}' '{{ image_size }}'
+
+    - name: Add system environment variables
+      environment:
+        command: echo ${{ }}
+        SERVER_IP: '{{ server_ip }}'
+        ADMIN_PASS: '{{ admin_pass }}'
+
+    - name: Deploy docker-compose
+      docker_compose:
+        project_src: /home/{{ user }}/ad-infrastructure/
+        files:
+          - docker-compose.yml
+
+    - name: Build and run vm`s with terraform
+      terraform:
+        project_path: /home/{{ user }}/ad-infrastructure/
+        state: present
+        force_init: true
