@@ -1,26 +1,98 @@
-- name: Deploy all infrastructure on server
+- name: Deploy all infrastructure on monitoring_server
   hosts: monitoring_server
   gather_facts: true
-  serial: 1
   become: true
 
-  tasks:
-    - name: Install docker and docker-compose on monitoring_server
-      roles:
-        - docker
+  roles:
+    - docker
 
-    - name: Install KVM and libvrt
+  tasks:
+    - name: Include vars from server_vars.yml file
+      include_vars: ./vars/server_vars.yml
+
+    - name: Check virtualization enabled
+      shell: egrep -c '(vmx|svm)' /proc/cpuinfo
+      register: virtualization_check
+
+    - name: Number of processors that supports virtualization is
+      debug:
+        msg: "{{ virtualization_check.stdout }}"
+
+    - name: Install KVM and libvirt
       apt:
         name: "{{ item }}"
         state: present
         update_cache: yes
-      loop:
+      with_items:
         - cpu-checker
         - qemu-kvm
         - libvirt-daemon-system
         - libvirt-clients
         - bridge-utils
-      when: egrep -c '(vmx|svm)' /proc/cpuinfo
-      command: adduser
+      when: virtualization_check.stdout | int > 0
 
-    - name:
+    - name: Add username to libvirt and kvm groups
+      command: sudo adduser {{ user }} {{ item }}
+      loop:
+        - libvirt
+        - kvm
+
+    - name: Check status of libvirtd and(or) enable it
+      systemd:
+        name: libvirtd
+        state: started
+        enabled: yes
+
+    - name: Install terraform dependencies
+      apt:
+        update_cache: yes
+        name: "{{ item }}"
+      with_items:
+        - gnupg
+        - software-properties-common
+        - curl
+
+    - name: Add the HashiCorp GPG key.
+      shell: curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo apt-key add -
+
+    - name: Add the official HashiCorp Linux repository.
+      shell: sudo apt-add-repository "deb [arch=amd64] https://apt.releases.hashicorp.com $(lsb_release -cs) main"
+
+    - name: Install terraform
+      apt:
+        update_cache: yes
+        name: terraform
+
+    # - name: Check status of services
+    #   command: systemctl status "{{ item }}"
+    #   with_items:
+    #     - libvirtd
+    #     - sshd
+    #   command: terraform -help
+    #   command: "{{ item }}" --version
+    #   with_items:
+    #     - docker
+    #     - docker-compose
+    - name: Create ad-infrastructure dir on monitoring_server
+      file:
+        path: ~/ad-infrastructure
+        state: directory
+        mode: '0755'
+
+    - name: Copy necessary directories to monitoring_server
+      copy:
+        src: ../{{ item }}
+        dest: /home/{{ user }}/ad-infrastructure/
+      with_items:
+        - ansible
+        - ad-infrastructure-api
+        - config
+        - keys
+        - monitoring
+        - tasks
+        - main.tf
+        - teams.tf
+        - user_rsa
+        - variables.tf
+
+  # - name: Download
