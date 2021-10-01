@@ -75,7 +75,7 @@
         dest: /home/{{ user }}/ad-infrastructure/
       with_items:
         - ansible
-        - ad-infrastructure-api/
+        - ad-infrastructure-api
         - config
         - keys
         - monitoring
