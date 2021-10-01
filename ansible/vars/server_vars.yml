@@ -2,5 +2,5 @@ user: fred
 wget_image: https://cloud-images.ubuntu.com/focal/current/focal-server-cloudimg-amd64.img
 iso_image: focal-server-cloudimg-amd64.img
 image_size: 30G
-server_ip: 192.168.100.125
-admin_pass: admin  # Redis and mongo
+server_ip: "192.168.100.125"
+admin_pass: "admin"  # Redis and mongo

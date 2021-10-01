@@ -76,6 +76,7 @@
       with_items:
         - ansible
         - ad-infrastructure-api
+        - ovpn-admin
         - config
         - keys
         - monitoring
@@ -96,23 +97,30 @@
 
 
     - name: Add system environment variables
-      shell: echo ${{ item }}
-      with_items:
-        - $SERVER_IP
-        - $ADMIN_PASS
-      environment:
-        SERVER_IP: '{{ server_ip }}'
-        ADMIN_PASS: '{{ admin_pass }}'
+      lineinfile:
+        path: /home/{{ user }}/.bashrc
+        line: "export {{ item.varname }}={{ item.varvalue }}"
+      loop:
+        - { varname: 'SERVER_IP', varvalue: '{{ server_ip }}' }
+        - { varname: 'ADMIN_PASS', varvalue: '{{ admin_pass }}' }
+      tags:
+        - set_env_vars
+
+    - name: OpenDistro max_map_count
+      sysctl:
+        name: vm.max_map_count
+        value: 262144
 
     - name: Deploy docker-compose
       docker_compose:
         project_src: /home/{{ user }}/ad-infrastructure/
+        build: yes
         files:
           - docker-compose.yml
 
     - name: Pause playbook to create new hosts
       pause:
-        prompt: Please confirm you configure vm`s and ready to resume playbook.
+        prompt: Please confirm you configure vm`s and ready to resume playbook
 
     - name: Build and run vm`s with terraform
       terraform:
