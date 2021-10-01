@@ -75,7 +75,7 @@
         dest: /home/{{ user }}/ad-infrastructure/
       with_items:
         - ansible
-        - ad-infrastructure-api
+        - ad-infrastructure-api/
         - config
         - keys
         - monitoring
@@ -92,11 +92,15 @@
         dest: /home/{{ user }}/ad-infrastructure/
 
     - name: Resize .iso image
-      shell: qemu-img resize '{{ iso_image }}' '{{ image_size }}'
+      command: chdir=/home/{{ user }}/ad-infrastructure sudo qemu-img resize {{ iso_image }} {{ image_size }}
+
 
     - name: Add system environment variables
+      shell: echo ${{ item }}
+      with_items:
+        - $SERVER_IP
+        - $ADMIN_PASS
       environment:
-        command: echo ${{ }}
         SERVER_IP: '{{ server_ip }}'
         ADMIN_PASS: '{{ admin_pass }}'
 
@@ -105,6 +109,10 @@
         project_src: /home/{{ user }}/ad-infrastructure/
         files:
           - docker-compose.yml
+
+    - name: Pause playbook to create new hosts
+      pause:
+        prompt: Please confirm you configure vm`s and ready to resume playbook.
 
     - name: Build and run vm`s with terraform
       terraform:
