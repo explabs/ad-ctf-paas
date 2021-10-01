@@ -77,14 +77,10 @@
         - ansible
         - ad-infrastructure-api
         - ovpn-admin
-        - config
-        - keys
         - monitoring
         - tasks
-        - main.tf
-        - teams.tf
+        - terraform
         - user_rsa
-        - variables.tf
         - docker-compose.yml
 
     - name: Download .iso image

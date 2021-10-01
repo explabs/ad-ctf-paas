@@ -24,7 +24,7 @@ resource "libvirt_volume" "os-qcow2" {
   count = length(var.teams)
   name = "${var.teams[count.index]}-qcow2"
   pool = libvirt_pool.os_pools.name
-  source = "${abspath(path.module)}/${var.os_images[count.index]}"
+  source = "${abspath(path.module)}/${var.os_image}"
   format = "qcow2"
 }
 
