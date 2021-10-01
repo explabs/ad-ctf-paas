@@ -44,6 +44,7 @@ resource "libvirt_cloudinit_disk" "commoninit" {
   })
   network_config = templatefile("${path.module}/config/network_config.yml", {
     interface = var.interface
+    gateway = var.gateways[count.index]
     ip_addr = var.ips[count.index]
     mac_addr = var.macs[count.index]
   })
@@ -59,7 +60,7 @@ resource "libvirt_domain" "os-domain" {
   cloudinit = libvirt_cloudinit_disk.commoninit[count.index].id
 
   network_interface {
-    network_name = "default"
+    network_name = var.network_name[count.index]
     addresses = [
       var.ips[count.index]
     ]
