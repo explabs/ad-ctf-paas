@@ -20,15 +20,9 @@
 
     - name: Install KVM and libvirt
       apt:
-        name: "{{ item }}"
+        name: ['cpu-checker', 'qemu-kvm', 'libvirt-daemon-system', 'libvirt-clients', 'bridge-utils']
         state: present
         update_cache: yes
-      with_items:
-        - cpu-checker
-        - qemu-kvm
-        - libvirt-daemon-system
-        - libvirt-clients
-        - bridge-utils
       when: virtualization_check.stdout | int > 0
 
     - name: Add username to libvirt and kvm groups
@@ -46,11 +40,7 @@
     - name: Install terraform dependencies
       apt:
         update_cache: yes
-        name: "{{ item }}"
-      with_items:
-        - gnupg
-        - software-properties-common
-        - curl
+        name: ['gnupg', 'software-properties-common', 'curl']
 
     - name: Add the HashiCorp GPG key.
       shell: curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo apt-key add -
@@ -83,10 +73,18 @@
         - user_rsa
         - docker-compose.yml
 
-    - name: Download .iso image
+    - name: Check that iso_image exists
+      stat:
+        path: /home/{{ user }}/ad-infrastructure/{{ iso_image }}
+      register: image_check
+
+    - name: Download .iso image if it doesn`t exists
       get_url:
         url:  '{{ wget_image }}'
         dest: /home/{{ user }}/ad-infrastructure/
+        checksum: '{{ image_cheksum }}'
+      when: not image_check.stat.exists
+
 
     - name: Resize .iso image
       command: chdir=/home/{{ user }}/ad-infrastructure sudo qemu-img resize {{ iso_image }} {{ image_size }}
