@@ -73,3 +73,33 @@ To show USER_CMD `cmd` field use follow command on VM:
 ```
 sudo ausearch -ua soc -m USER_CMD | grep cmd | awk '{print $8}' | cut -c 5- |  while read line; do echo $line | xxd -r -p; echo; done
 ```
+
+
+### Virtual networks
+#### Create bridge network
+example of config
+```
+<network connections='1'>
+  <name>virtbr-team1</name>
+  <forward mode='nat'/>
+  <bridge name='team-br1'/>
+  <domain name='virtbr-team1'/>
+  <ip address='10.0.1.254' netmask='255.255.255.0'>
+  <dhcp>
+    <range start='10.0.1.11' end='10.0.1.253'/>
+  </dhcp>
+  </ip>
+</network>
+```
+Create network from config
+```
+virsh net-create team1.xml 
+```
+Enter blank line at the end of file (I don't understand why this is needed)
+```
+virsh net-edit --network virtbr-team1
+```
+Enable autostart (if server will be restarted)
+```
+virsh net-autostart virtbr-team1
+```

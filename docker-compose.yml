@@ -5,6 +5,7 @@ services:
       context: ad-infrastructure-api
     container_name: ad-api
     environment:
+      - ADMIN_PASS=${ADMIN_PASS}
       - SERVER_IP=${SERVER_IP}
       - PROMETHEUS=http://prometheus:9090
       - OVPN_ADMIN=http://openvpn:9000
