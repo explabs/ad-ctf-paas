@@ -20,15 +20,9 @@
 
     - name: Install KVM and libvirt
       apt:
-        name: "{{ item }}"
+        name: ['cpu-checker', 'qemu-kvm', 'libvirt-daemon-system', 'libvirt-clients', 'bridge-utils']
         state: present
         update_cache: yes
-      with_items:
-        - cpu-checker
-        - qemu-kvm
-        - libvirt-daemon-system
-        - libvirt-clients
-        - bridge-utils
       when: virtualization_check.stdout | int > 0
 
     - name: Add username to libvirt and kvm groups
@@ -46,11 +40,7 @@
     - name: Install terraform dependencies
       apt:
         update_cache: yes
-        name: "{{ item }}"
-      with_items:
-        - gnupg
-        - software-properties-common
-        - curl
+        name: ['gnupg', 'software-properties-common', 'curl']
 
     - name: Add the HashiCorp GPG key.
       shell: curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo apt-key add -
@@ -76,43 +66,55 @@
       with_items:
         - ansible
         - ad-infrastructure-api
-        - config
-        - keys
+        - ovpn-admin
         - monitoring
         - tasks
-        - main.tf
-        - teams.tf
+        - terraform
         - user_rsa
-        - variables.tf
         - docker-compose.yml
 
-    - name: Download .iso image
+    - name: Check that iso_image exists
+      stat:
+        path: /home/{{ user }}/ad-infrastructure/{{ iso_image }}
+      register: image_check
+
+    - name: Download .iso image if it doesn`t exists
       get_url:
         url:  '{{ wget_image }}'
         dest: /home/{{ user }}/ad-infrastructure/
+        checksum: '{{ image_cheksum }}'
+      when: not image_check.stat.exists
+
 
     - name: Resize .iso image
       command: chdir=/home/{{ user }}/ad-infrastructure sudo qemu-img resize {{ iso_image }} {{ image_size }}
 
 
     - name: Add system environment variables
-      shell: echo ${{ item }}
-      with_items:
-        - $SERVER_IP
-        - $ADMIN_PASS
-      environment:
-        SERVER_IP: '{{ server_ip }}'
-        ADMIN_PASS: '{{ admin_pass }}'
+      lineinfile:
+        path: /home/{{ user }}/.bashrc
+        line: "export {{ item.varname }}={{ item.varvalue }}"
+      loop:
+        - { varname: 'SERVER_IP', varvalue: '{{ server_ip }}' }
+        - { varname: 'ADMIN_PASS', varvalue: '{{ admin_pass }}' }
+      tags:
+        - set_env_vars
+
+    - name: OpenDistro max_map_count
+      sysctl:
+        name: vm.max_map_count
+        value: 262144
 
     - name: Deploy docker-compose
       docker_compose:
         project_src: /home/{{ user }}/ad-infrastructure/
+        build: yes
         files:
           - docker-compose.yml
 
     - name: Pause playbook to create new hosts
       pause:
-        prompt: Please confirm you configure vm`s and ready to resume playbook.
+        prompt: Please confirm you configure vm`s and ready to resume playbook
 
     - name: Build and run vm`s with terraform
       terraform:
