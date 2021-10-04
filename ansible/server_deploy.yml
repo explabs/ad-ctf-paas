@@ -72,6 +72,7 @@
         - terraform
         - user_rsa
         - docker-compose.yml
+        - network.xml.j2
 
     - name: Check that iso_image exists
       stat:

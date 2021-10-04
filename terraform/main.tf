@@ -93,4 +93,16 @@ resource "libvirt_domain" "os-domain" {
     listen_type = "address"
     autoport = true
   }
+
+  provisioner "remote-exec" {
+    connection {
+      type        = "ssh"
+      user        = "${var.teams[count.index]}"
+      private_key = "${file("${abspath(path.module)}/keys/${var.teams[count.index]}.pub")}"
+    }
+  }
+
+  provisioner "local-exec" {
+    command = "${ansible-playbook -u var.teams[count.index] -i '${var.ips[count.index]},' --private-key ${file("${abspath(path.module)}/keys/${var.teams[count.index]}.pub")} vm_packages_installation.yml}"
+  }
 }
