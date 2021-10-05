@@ -122,3 +122,5 @@
         project_path: /home/{{ user }}/ad-infrastructure/
         state: present
         force_init: true
+      tags:
+        - terraform_deploy
