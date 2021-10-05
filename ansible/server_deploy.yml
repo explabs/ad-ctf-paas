@@ -72,6 +72,7 @@
         - terraform
         - user_rsa
         - docker-compose.yml
+        - docker-compose-api.yml
         - network.xml.j2
 
     - name: Check that iso_image exists
@@ -83,7 +84,6 @@
       get_url:
         url:  '{{ wget_image }}'
         dest: /home/{{ user }}/ad-infrastructure/
-        checksum: '{{ image_cheksum }}'
       when: not image_check.stat.exists
 
 
@@ -106,12 +106,14 @@
         name: vm.max_map_count
         value: 262144
 
-    - name: Deploy docker-compose
+    - name: Deploy api and monitoring
       docker_compose:
         project_src: /home/{{ user }}/ad-infrastructure/
         build: yes
-        files:
-          - docker-compose.yml
+        files: '{{ item }}'
+      with_items:
+        - docker-compose.yml
+        - docker-compose-api.yml
 
     - name: Pause playbook to create new hosts
       pause:

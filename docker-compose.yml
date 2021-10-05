@@ -1,40 +1,5 @@
 version: '3'
 services:
-  ad-api:
-    build:
-      context: ad-infrastructure-api
-    container_name: ad-api
-    environment:
-      - ADMIN_PASS=${ADMIN_PASS}
-      - SERVER_IP=${SERVER_IP}
-      - PROMETHEUS=http://prometheus:9090
-      - OVPN_ADMIN=http://openvpn:9000
-      - MONGODB=mongodb://mongo:27017
-      - REDIS=redis:6379
-    ports:
-      - "80:8080"
-    volumes:
-      - ./terraform/:/terraform
-      - ./ad-infrastructure-api/config.yml:/api/config.yml
-      - ./ad-infrastructure-api/walker.yml:/api/walker.yml
-      - ./ad-infrastructure-api/checker.yml:/api/checker.yml
-
-  mongo:
-    image: mongo:5.0
-    container_name: mongo
-    restart: unless-stopped
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: admin
-      MONGO_INITDB_ROOT_PASSWORD: ${ADMIN_PASS}
-    ports:
-      - "27017:27017"
-
-  redis:
-    image: redis:6.2-alpine
-    command: redis-server --requirepass ${ADMIN_PASS}
-    ports:
-      - "6379:6379"
-
   test-node1:
     image: amazon/opendistro-for-elasticsearch:1.13.2
     container_name: test-node1
