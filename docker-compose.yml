@@ -34,14 +34,14 @@ services:
     command: redis-server --requirepass ${ADMIN_PASS}
     ports:
       - "6379:6379"
-  test-node1:
+  node1:
     image: amazon/opendistro-for-elasticsearch:1.13.2
-    container_name: test-node1
+    container_name: node1
     environment:
       - cluster.name=test-cluster
-      - node.name=test-node1
-      - discovery.seed_hosts=test-node1,test-node2
-      - cluster.initial_master_nodes=test-node1,test-node2
+      - node.name=node1
+      - discovery.seed_hosts=node1,node2
+      - cluster.initial_master_nodes=node1,node2
       - bootstrap.memory_lock=true # along with the memlock settings below, disables swapping
       - "ES_JAVA_OPTS=-Xms512m -Xmx512m" # minimum and maximum Java heap size, recommend setting both to 50% of system RAM
     ulimits:
@@ -58,14 +58,14 @@ services:
       - "9600:9600"
     networks:
       - test-net
-  test-node2:
+  node2:
     image: amazon/opendistro-for-elasticsearch:1.13.2
-    container_name: test-node2
+    container_name: node2
     environment:
       - cluster.name=test-cluster
-      - node.name=test-node2
-      - discovery.seed_hosts=test-node1,test-node2
-      - cluster.initial_master_nodes=test-node1,test-node2
+      - node.name=node2
+      - discovery.seed_hosts=node1,node2
+      - cluster.initial_master_nodes=node1,node2
       - bootstrap.memory_lock=true
       - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
     ulimits:
@@ -79,19 +79,20 @@ services:
       - test-data2:/usr/share/elasticsearch/data
     networks:
       - test-net
-  test-kibana:
+  kibana:
     image: amazon/opendistro-for-elasticsearch-kibana:1.13.2
-    container_name: test-kibana
+    container_name: kibana
     ports:
       - "5601:5601"
     expose:
       - "5601"
     environment:
-      ELASTICSEARCH_URL: https://test-node1:9200
-      ELASTICSEARCH_HOSTS: https://test-node1:9200
+      ELASTICSEARCH_URL: https://node1:9200
+      ELASTICSEARCH_HOSTS: https://node1:9200
     networks:
       - test-net
   logstash:
+    container_name: logstash
     image: docker.elastic.co/logstash/logstash-oss:7.14.1
     volumes:
       - ./monitoring/network/logstash.conf:/usr/share/logstash/pipeline/logstash.conf:ro
@@ -100,11 +101,12 @@ services:
     environment:
       LS_JAVA_OPTS: "-Xmx256m -Xms256m"
     depends_on:
-      - test-node1
+      - node1
     networks:
       - test-net
 
   prometheus:
+    container_name: prometheus
     image: prom/prometheus
     volumes:
       - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
@@ -116,6 +118,7 @@ services:
       - test-net
 
   grafana:
+    container_name: grafana
     image: grafana/grafana:latest
     volumes:
       - ./monitoring/grafana/grafana.ini:/etc/grafana/grafana.ini
@@ -128,6 +131,7 @@ services:
       - test-net
 
   openvpn:
+    container_name: openvpn
     build:
       context: ovpn-admin
       dockerfile: Dockerfile.openvpn
@@ -143,6 +147,7 @@ services:
       - ./openvpn/ccd_master:/etc/openvpn/ccd
 
   ovpn-admin:
+    container_name: ovpn-admin
     build:
       context: ovpn-admin
     image: ovpn-admin:local

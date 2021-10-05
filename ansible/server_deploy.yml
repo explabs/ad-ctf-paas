@@ -61,7 +61,7 @@
         state: directory
         mode: '0755'
 
-    - name: Copy necessary directories to monitoring_server
+    - name: Upload necessary directories to monitoring_server
       copy:
         src: ../{{ item }}
         dest: /home/{{ user }}/ad-infrastructure/
@@ -74,7 +74,10 @@
         - terraform
         - user_rsa
         - docker-compose.yml
+        - .env
         - network.xml.j2
+      tags:
+        - upload_files
 
     - name: Check that iso_image exists
       stat:
@@ -107,23 +110,94 @@
         name: vm.max_map_count
         value: 262144
 
+    # - name: Create docker .env
+    #   file:
+    #     path: /home/{{ user }}/ad-infrastructure/.env
+    #     state: touch
+    #
+    # - name: Put environment to .env
+    #   lineinfile:
+    #     path: /home/{{ user }}/ad-infrastructure/.env
+    #     line: {{ item.name }}
+
+
     - name: Stop current containers
       docker_compose:
         project_src: /home/{{ user }}/ad-infrastructure/
         state: absent
+      tags:
+        - stop_containers
 
-    - name: Run api and monitoring
+    # - name: Run ap
+    #   shell: chdir=/home/{{ user }}/ad-infrastructure/ docker-compose up --build ad-api mongo redis
+    #   environment:
+    #     ADMIN_PASS: '{{ admin_pass }}'
+    #     SERVER_IP:  '{{ server_ip }}'
+    #   tags:
+    #     - deploy_api
+
+    - name: Run api
       docker_compose:
         project_src: /home/{{ user }}/ad-infrastructure/
-        build: no
+        build: yes
+        services:
+          - mongo
+          - redis
+          - openvpn
+          - ovpn-admin
         debug: yes
+      tags:
+        - deploy_api
 
-    - name: Restart api, redis and mongodb
-      shell: # Change next time via assert
+    - name: Run ad-api
+      docker_compose:
+        project_src: /home/{{ user }}/ad-infrastructure/
+        build: yes
+        services:
+          - ad-api
+        debug: yes
+      tags:
+        - deploy_api
+
+    - name: Run monitoring
+      docker_compose:
+        project_src: /home/{{ user }}/ad-infrastructure/
+        build: yes
+        services:
+          - node1
+          - node2
+          - kibana
+          - logstash
+        debug: yes
+      tags:
+        - deploy_monitoring
+
 
     - name: Pause playbook to create new hosts
       pause:
         prompt: Please confirm you configure vm`s and ready to resume playbook
+
+
+    - name: Get team count
+      uri:
+        url: http://{{ server_ip }}/api/v1/services/teams/count
+        return_content: yes
+      register: result
+      tags:
+        - teams_count
+
+    # - name: Set fact
+    #   set_fact: teams_count={{ result.json.count }}
+    #   register: fact
+    #   tags:
+    #     - teams_count
+
+
+    - name: Print teams count
+      debug:
+        msg: "{{ result.json.count }}"
+      tags:
+        - teams_count
 
     - name: Build and run vm`s with terraform
       terraform:
