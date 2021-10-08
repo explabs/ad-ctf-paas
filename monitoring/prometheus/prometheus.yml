@@ -12,7 +12,7 @@ scrape_configs:
     metrics_path: api/v1/checker
     static_configs:
       - targets:
-          - 192.168.100.105:80
+          - 192.168.100.105:8080
     basic_auth:
       username: 'checker'
       password: 'test'
