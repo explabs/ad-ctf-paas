@@ -159,28 +159,9 @@
       pause:
         prompt: Please confirm you configure networks and ready to resume playbook
 
-
-    # - name: Get team count
-    #   uri:
-    #     url: http://{{ server_ip }}/api/v1/services/teams/count
-    #     return_content: yes
-    #   register: networks
-    #   tags:
-    #     - teams
-
-    # - name:
-    #   vars:
-    #     network_count: '{{ network_count }}'
-
-
-
-    # - name: Define new networks based on teams count
-    #   libvirt.virt_net:
-    #     command: define
-
     - name: Define JSON response
       uri:
-        url: "http://192.168.100.116:8000/api/v1/services/teams"
+        url: "http://192.168.100.116:8000/api/v1/services/teams/info"
         method: GET
         headers:
           Content-Type: "application/json"
@@ -188,45 +169,30 @@
       register: result
       tags: get_result
 
-    # - name: Define teams
-    #   set_fact:
-    #     team="{{ result.content | from_json | json_query('teams')}}"
-    #   register: teams
-    #   tags: teams
-
-    - name: Create Networks
+    - name: Define networks
       virt_net:
         command: define
+        name: "{{ item['name'] }}"
         xml: "{{ lookup('template', 'network.xml.j2') }}"
       with_items: "{{ result.json.teams }}"
-      tags: test_loop
+      tags: define_networks
 
+    - name: Setting state of virtual networks
+      virt_net:
+        name: "{{ item['name'] }}"
+        state: active
+      with_items: "{{ result.json.teams }}"
 
+    - name: Setting virtual networks to autostart
+      virt_net:
+        autostart: true
+        name: "{{ item['name'] }}"
+      with_items: "{{ result.json.teams }}"
 
-    # - name: Print teams info
-    #   debug:
-    #     msg: "{{ teams.stdout_lines | items2dict(key_name='name', value_name='network_ip') }}"
-    #   tags: print_teams
-
-    # - name: Define networks
-
-
-
-
-    # - name: Define networks based on teams credentials
-    #   libvirt.virt_net:
-    #     name: '{{ item.name }}_br_nat'
-    #     command: define
-    #     xml: "{{ lookup('template', 'network.xml.j2') }}"
-    #
-    #
-    #
-    #
-    #
-    # - name: Build and run vm`s with terraform
-    #   terraform:
-    #     project_path: /home/{{ user }}/ad-infrastructure/
-    #     state: present
-    #     force_init: true
-    #   tags:
-    #     - terraform_deploy
+    - name: Build and run vm`s with terraform
+      terraform:
+        project_path: /home/{{ user }}/ad-infrastructure/
+        state: present
+        force_init: true
+      tags:
+        - terraform_deploy
