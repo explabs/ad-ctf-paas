@@ -76,9 +76,8 @@
         - docker-compose.yml
         - .env
         - network.xml.j2
-        - test.json
-      tags:
-        - upload_files
+        - vm_hosts.ini.j2
+      tags: upload_files
 
     - name: Check that iso_image exists
       stat:
@@ -95,17 +94,6 @@
     - name: Resize .iso image
       command: chdir=/home/{{ user }}/ad-infrastructure sudo qemu-img resize {{ iso_image }} {{ image_size }}
 
-
-    - name: Add system environment variables
-      lineinfile:
-        path: /home/{{ user }}/.bashrc
-        line: "export {{ item.varname }}={{ item.varvalue }}"
-      loop:
-        - { varname: 'SERVER_IP', varvalue: '{{ server_ip }}' }
-        - { varname: 'ADMIN_PASS', varvalue: '{{ admin_pass }}' }
-      tags:
-        - set_env_vars
-
     - name: OpenDistro max_map_count user }}
       sysctl:
         name: vm.max_map_count
@@ -115,8 +103,7 @@
       docker_compose:
         project_src: /home/{{ user }}/ad-infrastructure/
         state: absent
-      tags:
-        - stop_containers
+      tags: deploy_api
 
     - name: Run api
       docker_compose:
@@ -128,8 +115,7 @@
           - openvpn
           - ovpn-admin
         debug: yes
-      tags:
-        - deploy_api
+      tags: deploy_api
 
     - name: Run ad-api
       docker_compose:
@@ -138,8 +124,7 @@
         services:
           - ad-api
         debug: yes
-      tags:
-        - deploy_api
+      tags: deploy_api
 
     - name: Run monitoring
       docker_compose:
@@ -151,8 +136,7 @@
           - kibana
           - logstash
         debug: yes
-      tags:
-        - deploy_monitoring
+      tags: deploy_monitoring
 
 
     - name: Pause playbook to create networks
@@ -161,7 +145,7 @@
 
     - name: Define JSON response
       uri:
-        url: "http://192.168.100.116:8000/api/v1/services/teams/info"
+        url: "http://192.168.100.116:8000/api/v1/services/teams/info"  #  This is test URL, change in to your production URL
         method: GET
         headers:
           Content-Type: "application/json"
@@ -175,24 +159,35 @@
         name: "{{ item['name'] }}"
         xml: "{{ lookup('template', 'network.xml.j2') }}"
       with_items: "{{ result.json.teams }}"
-      tags: define_networks
+      tags: setup_networks
 
     - name: Setting state of virtual networks
       virt_net:
         name: "{{ item['name'] }}"
         state: active
       with_items: "{{ result.json.teams }}"
+      tags: setup_networks
 
     - name: Setting virtual networks to autostart
       virt_net:
         autostart: true
         name: "{{ item['name'] }}"
       with_items: "{{ result.json.teams }}"
+      tags: setup_networks
+
+    - name: Create hosts file for inner ansible-playbooks
+      file:
+        path: /home/{{ user }}/ad-infrastructure/ansible/vm_hosts.ini
+        state: touch
+        mode: '554'
+
+    - name: Template hosts file for inner ansible-playbooks
+      template:
+        src:
 
     - name: Build and run vm`s with terraform
       terraform:
         project_path: /home/{{ user }}/ad-infrastructure/
         state: present
         force_init: true
-      tags:
-        - terraform_deploy
+      tags: terraform_deploy

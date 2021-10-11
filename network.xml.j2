@@ -1,7 +1,7 @@
 <network connections='1'>
   <name>{{ item.name }}</name>
   <forward mode='{{ item.mode }}'/>
-  <bridge name='{{ item.bridge }}'/>
+  <bridge name='{{ item.name }}-br'/>
   {% if item.mode == 'route' or item.mode == 'nat' %}
   <domain name='{{ item.domain|default(item.name) }}'/>
   <ip address='{{ item.ip }}' netmask='{{ item.netmask }}'>
