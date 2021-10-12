@@ -1,4 +1,4 @@
-focal-server-cloudimg-amd64.img
+terraform/focal-server-cloudimg-amd64.img
 terraform.tfstate
 terraform.tfstate.backup
 .terraform/
