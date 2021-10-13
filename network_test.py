@@ -23,3 +23,9 @@ for i in range(1, 3):
 # iptables -I FORWARD -i tun+ -o team-br+ -m state --state RELATED,ESTABLISHED -j ACCEPT
 # iptables -I FORWARD -i team-br+ -o tun+ -m state --state RELATED,ESTABLISHED -j ACCEPT
 # iptables -A OUTPUT -o tun+ -j ACCEPT
+
+
+# iptables -I FORWARD -i tun+ -j ACCEPT
+# iptables -I FORWARD -i tun+ -o team1-br -m state --state RELATED,ESTABLISHED -j ACCEPT
+# iptables -I FORWARD -i team1-br -o tun+ -m state --state RELATED,ESTABLISHED -j ACCEPT
+# iptables -A OUTPUT -o tun+ -j ACCEPT

@@ -1,3 +1,4 @@
+
 variable "teams" {
   default = ["naliway", "nakateam"]
 }

@@ -2,22 +2,22 @@ from flask import Flask, request
 
 app = Flask(__name__)
 
-flag = ""
+flag = dict()
 
 
-@app.route("/user", methods=["PUT"])
+@app.route("/user", methods=["POST"])
 def user():
     global flag
-    if request.method == "PUT":
+    if request.method == "POST":
         data = request.json
-        flag = data["password"]
-        return f"add user {data['name']}"
+        flag["123"] = data["password"]
+        return "123"
 
 
-@app.route("/check/<route>")
-def checker(route):
-    if route == "user":
-        return flag
+@app.route("/user/<route>")
+def get_user(route):
+    if request.method == "GET":
+        return flag[route]
 
 
 if __name__ == '__main__':
