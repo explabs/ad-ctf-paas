@@ -12,7 +12,7 @@ auditbeat.modules:
 
 - module: auditd
   # Load audit rules from separate files. Same format as audit.rules(7).
-  audit_rule_files: [ '${path.config}/audit.rules.d/*.conf' ]
+  #audit_rule_files: [ '${path.config}/audit.rules.d/*.conf' ]
   audit_rules: |
     ## Define audit rules here.
     ## Create file watches (-w) or syscall audits (-a or -A). Uncomment these
@@ -23,7 +23,8 @@ auditbeat.modules:
     ## because this might be a sign of someone exploiting a hole in the 32
     ## bit API.
     #-a always,exit -F arch=b32 -S all -F key=32bit-abi
-
+    -a always,exit -F arch=b64 -F uid=0 -S execve -k rootact
+    -a always,exit -F arch=b64 -F uid>0 -S execve -k useract
     ## Executions.
     #-a always,exit -F arch=b64 -S execve,execveat -k exec
 
@@ -96,8 +97,8 @@ setup.template.settings:
 # These settings control loading the sample dashboards to the Kibana index. Loading
 # the dashboards is disabled by default and can be enabled either by setting the
 # options here, or by using the `-setup` CLI flag or the `setup` command.
-#setup.dashboards.enabled: false
-
+setup.dashboards.enabled: true
+setup.dashboards.index: "auditbeat-*"
 # The URL from where to download the dashboards archive. By default this URL
 # has a value which is computed based on the Beat name and version. For released
 # versions, this URL points to the dashboard archive on the artifacts.elastic.co
@@ -108,14 +109,15 @@ setup.template.settings:
 
 # Starting with Beats version 6.0.0, the dashboards are loaded via the Kibana API.
 # This requires a Kibana endpoint configuration.
-#setup.kibana:
+setup.kibana:
 
   # Kibana Host
   # Scheme and port can be left out and will be set to the default (http and 5601)
   # In case you specify and additional path, the scheme is required: http://localhost:5601/path
   # IPv6 addresses should always be defined as: https://[2001:db8::1]:5601
-  #host: "192.168.122.10:5601"
-
+  host: "192.168.122.10:5601"
+  username: "admin"
+  password: "admin"
   # Kibana Space ID
   # ID of the Kibana Space into which the dashboards should be loaded. By default,
   # the Default Space will be used.

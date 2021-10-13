@@ -98,13 +98,11 @@ resource "libvirt_domain" "os-domain" {
     inline = ["sudo apt install python3"]
     connection {
       type        = "ssh"
-      host        = var.ips[count.index]
-      user        = var.teams[count.index]
-      private_key = file("${abspath(path.module)}/keys/${var.teams[count.index]}.pub")
+      user        = "${var.teams[count.index]}"
+      private_key = "${file("${abspath(path.module)}/keys/${var.teams[count.index]}.pub")}"
     }
   }
-
   provisioner "local-exec" {
-    command = "ansible-playbook -u ${var.teams[count.index]} -i '${var.ips[count.index]},' --private-key ${file("${abspath(path.module)}/keys/${var.teams[count.index]}.pub")} vm_packages_installation.yml"
+    command = "${ansible-playbook -u var.teams[count.index] -i '${var.ips[count.index]},' --private-key ${file("${abspath(path.module)}/keys/${var.teams[count.index]}.pub")} vm_packages_installation.yml}"
   }
 }

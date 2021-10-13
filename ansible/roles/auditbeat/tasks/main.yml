@@ -1,33 +1,17 @@
-- name: Download and install Public Signign Key(Auditbeat)
-  shell: wget -qO - https://artifacts.elastic.co/GPG-KEY-elasticsearch | sudo apt-key add -
-
-- name: Install https
-  apt:
-    name: "apt-transport-https"
-    state: present
-    update_cache: yes
-
-- name: Save repo to /etc/apt/sources.list.d/
-  shell: echo "deb https://artifacts.elastic.co/packages/6.x/apt stable main" | sudo tee -a /etc/apt/sources.list.d/elastic-6.x.list
-
-- name: Install auditbeat
-  apt:
-    name: "auditbeat"
-    state: present
-    update_cache: yes
-
-- name: Check auditbeat service status
-  ansible.builtin.systemd:
-    state: started
-    name: auditbeat
-
-- name: Enable auditbeat service
-  ansible.builtin.systemd:
-    name: auditbeat
-    enabled: yes
+- name: download and unarchive an archive
+  ansible.builtin.unarchive:
+    src: https://artifacts.elastic.co/downloads/beats/auditbeat/auditbeat-7.10.2-linux-x86_64.tar.gz
+    dst: /home/root
+    remote_src: yes
 
 - name: Replace auditbeat.yml with custom
   ansible.builtin.copy:
     src: ../auditbeat.yml
-    dest: /etc/auditbeat/auditbeat.yml
-    mode: '664'
+    dest: /home/root/auditbeat-7.10.2-linux-x86_64/auditbeat.yml
+    mode: '644'
+    owner: root
+
+- name: Change the working directory to /home/root/auditbeat-7.10.2-linux-x86_64/ before executing the command
+  ansible.builtin.shell: ./auditbeat -e
+  args:
+    chdir: /home/root/auditbeat-7.10.2-linux-x86_64/
