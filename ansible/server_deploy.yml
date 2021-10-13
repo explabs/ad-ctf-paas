@@ -30,6 +30,12 @@
         update_cache: yes
       when: virtualization_check.stdout | int > 0
 
+    - name: Install python packages
+      apt:
+        name: ['python3-libvirt', 'python3-lxml']
+        update_cache: yes
+      tags: test
+
     - name: Add username to libvirt and kvm groups
       command: sudo adduser {{ user }} {{ item }}
       loop:
@@ -97,7 +103,7 @@
     - name: Resize .iso image
       command: chdir=/home/{{ user }}/ad-infrastructure sudo qemu-img resize {{ iso_image }} {{ image_size }}
 
-    - name: OpenDistro max_map_count user }}
+    - name: OpenDistro max_map_count user
       sysctl:
         name: vm.max_map_count
         value: 262144
@@ -157,7 +163,7 @@
       tags: get_result
 
     - name: Define networks
-      virt_net:
+      community.libvirt.virt_net:
         command: define
         name: "{{ item['name'] }}"
         xml: "{{ lookup('template', '../network.xml.j2') }}"
@@ -165,14 +171,14 @@
       tags: setup_networks
 
     - name: Setting state of virtual networks
-      virt_net:
+      community.libvirt.virt_net:
         name: "{{ item['name'] }}"
         state: active
       with_items: "{{ result.json.teams }}"
       tags: setup_networks
 
     - name: Setting virtual networks to autostart
-      virt_net:
+      community.libvirt.virt_net:
         autostart: true
         name: "{{ item['name'] }}"
       with_items: "{{ result.json.teams }}"
