@@ -178,9 +178,36 @@
       with_items: "{{ result.json.teams }}"
       tags: setup_networks
 
-    - name: Accept port forwarding
+    - name: Accept port forwarding for tun
       iptables:
+        chain: FORWARD
+        in_interface: tun+
+        jump: ACCEPT
 
+    - name: Define port forwarding from tun to team_br
+      iptables:
+        chain: FORWARD
+        in_interface: tun+
+        out_interface: team_br+
+        match: state
+        ctstate: RELATED, ESTABLISHED
+        jump: ACCEPT
+
+    - name: Define port forwarding from team_br to tun
+      iptables:
+        chain: FORWARD
+        in_interface:  team_br+
+        out_interface: tun+
+        match: state
+        ctstate: RELATED, ESTABLISHED
+        jump: ACCEPT
+
+    - name: Append chain
+      iptables:
+        chain: OUTPUT
+        action: append
+        out_interface: tun+
+        jump: ACCEPT
 
     - name: Create hosts file for inner ansible-playbooks
       file:
