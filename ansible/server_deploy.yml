@@ -215,11 +215,11 @@
         state: touch
         mode: '554'
 
-    - name: Template hosts file for inner ansible-playbooks
-      template:
-        src: /home/{{ user }}/ad-infrastructure/vm_hosts.ini.j2
-        dest: /home/{{ user }}/ad-infrastructure/ansible/vm_hosts.ini
-        mode
+    # - name: Template hosts file for inner ansible-playbooks
+    #   template:
+    #     src: /home/{{ user }}/ad-infrastructure/vm_hosts.ini.j2
+    #     dest: /home/{{ user }}/ad-infrastructure/ansible/vm_hosts.ini
+    #     mode:
 
     - name: Build and run vm`s with terraform
       terraform:
