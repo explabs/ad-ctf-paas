@@ -8,7 +8,10 @@
 
   tasks:
     - name: Include vars from server_vars.yml file
-      include_vars: ./vars/server_vars.yml
+      include_vars:
+        dir: vars/all
+        extensions:
+          - 'yml'
       tags:
         include_vars
 
@@ -175,19 +178,52 @@
       with_items: "{{ result.json.teams }}"
       tags: setup_networks
 
+    - name: Accept port forwarding for tun
+      iptables:
+        chain: FORWARD
+        in_interface: tun+
+        jump: ACCEPT
+
+    - name: Define port forwarding from tun to team_br
+      iptables:
+        chain: FORWARD
+        in_interface: tun+
+        out_interface: team_br+
+        match: state
+        ctstate: RELATED, ESTABLISHED
+        jump: ACCEPT
+
+    - name: Define port forwarding from team_br to tun
+      iptables:
+        chain: FORWARD
+        in_interface:  team_br+
+        out_interface: tun+
+        match: state
+        ctstate: RELATED, ESTABLISHED
+        jump: ACCEPT
+
+    - name: Append chain
+      iptables:
+        chain: OUTPUT
+        action: append
+        out_interface: tun+
+        jump: ACCEPT
+
     - name: Create hosts file for inner ansible-playbooks
       file:
         path: /home/{{ user }}/ad-infrastructure/ansible/vm_hosts.ini
         state: touch
         mode: '554'
 
-    - name: Template hosts file for inner ansible-playbooks
-      template:
-        src:
+    # - name: Template hosts file for inner ansible-playbooks
+    #   template:
+    #     src: /home/{{ user }}/ad-infrastructure/vm_hosts.ini.j2
+    #     dest: /home/{{ user }}/ad-infrastructure/ansible/vm_hosts.ini
+    #     mode:
 
     - name: Build and run vm`s with terraform
       terraform:
-        project_path: /home/{{ user }}/ad-infrastructure/
+        project_path: /home/{{ user }}/ad-infrastructure/terraform/
         state: present
         force_init: true
       tags: terraform_deploy
