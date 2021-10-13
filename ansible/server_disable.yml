@@ -1,0 +1,31 @@
+- name: Disable all infrastructure on server
+  hosts: monitoring_server
+  gather_facts: true
+  become: true
+
+  tasks:
+    - name: Include vars from server_vars.yml file
+      include_vars:
+        dir: vars/all
+        extensions:
+          - 'yml'
+      tags:
+        include_vars
+
+    - name: Stop containers
+      docker_compose:
+        project_src: /home/{{ user }}/ad-infrastructure/
+        state: absent
+      tags: stop_containers
+
+    - name: Stop terraform
+      terraform:
+        project_path: //home/{{ user }}/ad-infrastructure/terraform/
+        state: absent
+      tags: stop_terraform
+
+    - name: Uninstall docker
+      apt:
+        name: "{{ docker_packages }}"
+        state: absent
+      tags: uninstall_docker

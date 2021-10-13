@@ -8,7 +8,10 @@
 
   tasks:
     - name: Include vars from server_vars.yml file
-      include_vars: ./vars/server_vars.yml
+      include_vars:
+        dir: vars/all
+        extensions:
+          - 'yml'
       tags:
         include_vars
 
@@ -175,6 +178,10 @@
       with_items: "{{ result.json.teams }}"
       tags: setup_networks
 
+    - name: Accept port forwarding
+      iptables:
+
+
     - name: Create hosts file for inner ansible-playbooks
       file:
         path: /home/{{ user }}/ad-infrastructure/ansible/vm_hosts.ini
@@ -183,11 +190,13 @@
 
     - name: Template hosts file for inner ansible-playbooks
       template:
-        src:
+        src: /home/{{ user }}/ad-infrastructure/vm_hosts.ini.j2
+        dest: /home/{{ user }}/ad-infrastructure/ansible/vm_hosts.ini
+        mode
 
     - name: Build and run vm`s with terraform
       terraform:
-        project_path: /home/{{ user }}/ad-infrastructure/
+        project_path: /home/{{ user }}/ad-infrastructure/terraform/
         state: present
         force_init: true
       tags: terraform_deploy

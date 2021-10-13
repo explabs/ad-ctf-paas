@@ -1,0 +1,22 @@
+packages:
+  - cpu-checker
+  - qemu-kvm
+  - libvirt-daemon-system
+  - libvirt-clients
+  - bridge-utils
+  - apt-transport-https
+  - ca-certificates
+  - curl
+  - gnupg-agent
+  - software-properties-common
+  - python3-pip
+  - python3-setuptools
+  - terraform
+
+docker_packages:
+  - docker
+  - docker-engine
+  - docker.io
+  - containerd
+  - runc
+  - docker-compose
