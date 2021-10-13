@@ -9,7 +9,7 @@
   tasks:
     - name: Include vars from server_vars.yml file
       include_vars:
-        dir: vars/all
+        dir: vars/
         extensions:
           - 'yml'
       tags:
@@ -160,7 +160,7 @@
       virt_net:
         command: define
         name: "{{ item['name'] }}"
-        xml: "{{ lookup('template', 'network.xml.j2') }}"
+        xml: "{{ lookup('template', '../network.xml.j2') }}"
       with_items: "{{ result.json.teams }}"
       tags: setup_networks
 

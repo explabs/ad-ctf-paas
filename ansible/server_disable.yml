@@ -6,7 +6,7 @@
   tasks:
     - name: Include vars from server_vars.yml file
       include_vars:
-        dir: vars/all
+        dir: vars/
         extensions:
           - 'yml'
       tags:
@@ -25,7 +25,7 @@
     - name: Destroy networks
       virt_net:
         command: destroy
-        name: team-br_"{{ item['name'] }}"
+        name: team-br-"{{ item['name'] }}"
       with_items: "{{ result.json.teams }}"
       tags: destroy_networks
 
