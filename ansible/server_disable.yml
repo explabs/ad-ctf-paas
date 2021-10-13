@@ -12,6 +12,23 @@
       tags:
         include_vars
 
+    - name: Get teams to delete networks
+      uri:
+        url: "http://192.168.100.116:8000/api/v1/services/teams/info"  #  This is test URL, change in to your production URL
+        method: GET
+        headers:
+          Content-Type: "application/json"
+      ignore_errors: true
+      register: result
+      tags: get_result
+
+    - name: Destroy networks
+      virt_net:
+        command: destroy
+        name: team-br_"{{ item['name'] }}"
+      with_items: "{{ result.json.teams }}"
+      tags: destroy_networks
+
     - name: Stop containers
       docker_compose:
         project_src: /home/{{ user }}/ad-infrastructure/
@@ -20,7 +37,7 @@
 
     - name: Stop terraform
       terraform:
-        project_path: //home/{{ user }}/ad-infrastructure/terraform/
+        project_path: /home/{{ user }}/ad-infrastructure/terraform/
         state: absent
       tags: stop_terraform
 
@@ -29,3 +46,25 @@
         name: "{{ docker_packages }}"
         state: absent
       tags: uninstall_docker
+
+    - name: Delete ad-infrastructure repository
+      file:
+        path: /home/{{ user }}/ad-infrastructure
+        state: absent
+      tags: delete_ad-infrastructure
+
+    - name: Delete all packages
+      apt:
+        name: "{{ packages }}"
+        state: absent
+      tags: delete_packages
+
+    - name: Remove useless packages from the cache
+      apt:
+        autoclean: yes
+      tags: clean_cache
+
+    - name: Remove dependencies that are no longer required
+      apt:
+        autoremove: yes
+      tags: clean_cache
