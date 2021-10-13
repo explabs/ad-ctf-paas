@@ -6,7 +6,7 @@ Official documentation: [Terraform](https://www.terraform.io/downloads.html)
 
 _Note: For use autocomplete use `terraform -install-autocomplete` and restart your shell._
 ### libvirt
-TODO: add links to install instructions for VM and Host 
+TODO: add links to install instructions for VM and Host
 ### Terraform Libvirt Provider
 You can install from source: [Github](https://github.com/dmacvicar/terraform-provider-libvirt)
 ### Ubuntu image
@@ -29,7 +29,7 @@ terraform apply
 For destroy infrastructure use `terraform destroy`
 
 ## Connection
-Connection to the VMs via ssh: 
+Connection to the VMs via ssh:
 ```
 ssh -i user_rsa user@ip
 ```
@@ -37,6 +37,9 @@ ssh -i user_rsa user@ip
 If you encounter with `Could not open <path_to_file>: Permission denied` double check that `security_driver = "none"` is uncommented in `/etc/libvirt/qemu.conf` and issue `sudo systemctl restart libvirtd` to restart the daemon.
 
 ## Monitoring
+### Ansible
+Install Ansible: `sudo apt install ansible`
+Install community.libvirt collection from ansible-galaxy: `ansible-galaxy collection install community.libvirt`
 ### OpenDistro
 #### Run service
 ```
@@ -93,7 +96,7 @@ example of config
 ```
 Create network from config
 ```
-virsh net-create team1.xml 
+virsh net-create team1.xml
 ```
 Enter blank line at the end of file (I don't understand why this is needed)
 ```
