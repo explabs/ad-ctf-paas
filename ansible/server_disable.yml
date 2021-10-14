@@ -42,11 +42,11 @@
         name: "{{ item['name'] }}"
       tags: destroy_networks
 
-    - name: Remove default network from autostart
-      virt_net:
-        autostart: no
-        name: default
-      tags: destroy_networks
+    # - name: Remove default network from autostart
+    #   virt_net:
+    #     autostart: no
+    #     name: default
+    #   tags: destroy_networks
 
     - name: Delete iptables rules
       command: iptables -D "{{ item }}"
