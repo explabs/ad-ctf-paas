@@ -48,7 +48,13 @@
         name: default
       tags: destroy_networks
 
-# Add iptables rules delition
+    - name: Delete iptables rules
+      command: iptables -D "{{ item }}"
+      with_items:
+        - FORWARD -i tun+ -j ACCEPT
+        - FORWARD -i tun+ -o team_br+ -m state --state RELATED,ESTABLISHED -j ACCEPT
+        - FORWARD -i team_br+ -o tun+ -m state --state RELATED,ESTABLISHED -j ACCEPT
+        - OUTPUT -o tun+ -j ACCEPT
 
     - name: Stop containers
       docker_compose:
