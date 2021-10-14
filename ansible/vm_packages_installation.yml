@@ -1,5 +1,5 @@
 - name: Auditbeat, packetbeat, docker installation and configuration
-  hosts: # host from ad_hosts.ini
+  hosts: all  
   gather_facts: true
   serial: 1
   become: true
