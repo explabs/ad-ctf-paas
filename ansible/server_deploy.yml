@@ -85,7 +85,6 @@
         - docker-compose.yml
         - .env
         - network.xml.j2
-        - vm_hosts.ini.j2
       tags: upload_files
 
     - name: Check that iso_image exists
@@ -190,20 +189,20 @@
         jump: ACCEPT
       tags: iptables
 
-    - name: Define port forwarding from tun to team_br
+    - name: Define port forwarding from tun to team-br
       iptables:
         chain: FORWARD
         in_interface: tun+
-        out_interface: team_br+
+        out_interface: team-br+
         match: state
         ctstate: ESTABLISHED,RELATED
         jump: ACCEPT
       tags: iptables
 
-    - name: Define port forwarding from team_br to tun
+    - name: Define port forwarding from team-br to tun
       iptables:
         chain: FORWARD
-        in_interface:  team_br+
+        in_interface:  team-br+
         out_interface: tun+
         match: state
         ctstate: ESTABLISHED,RELATED
