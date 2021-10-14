@@ -147,7 +147,6 @@
         debug: yes
       tags: deploy_monitoring
 
-
     - name: Pause playbook to create networks
       pause:
         prompt: Please confirm you configure networks and ready to resume playbook
@@ -163,7 +162,7 @@
       tags: get_result
 
     - name: Define networks
-      community.libvirt.virt_net:
+      virt_net:
         command: define
         name: "{{ item['name'] }}"
         xml: "{{ lookup('template', '../network.xml.j2') }}"
@@ -171,14 +170,14 @@
       tags: setup_networks
 
     - name: Setting state of virtual networks
-      community.libvirt.virt_net:
+      virt_net:
         name: "{{ item['name'] }}"
         state: active
       with_items: "{{ result.json.teams }}"
       tags: setup_networks
 
     - name: Setting virtual networks to autostart
-      community.libvirt.virt_net:
+      virt_net:
         autostart: true
         name: "{{ item['name'] }}"
       with_items: "{{ result.json.teams }}"
@@ -224,12 +223,6 @@
         path: /home/{{ user }}/ad-infrastructure/ansible/vm_hosts.ini
         state: touch
         mode: '554'
-
-    # - name: Template hosts file for inner ansible-playbooks
-    #   template:
-    #     src: /home/{{ user }}/ad-infrastructure/vm_hosts.ini.j2
-    #     dest: /home/{{ user }}/ad-infrastructure/ansible/vm_hosts.ini
-    #     mode:
 
     - name: Build and run vm`s with terraform
       terraform:

@@ -36,6 +36,20 @@
         name: default
       tags: destroy_networks
 
+    - name: Remove team networks from autostart
+      virt_net:
+        autostart: no
+        name: "{{ item['name'] }}"
+      tags: destroy_networks
+
+    - name: Remove default network from autostart
+      virt_net:
+        autostart: no
+        name: default
+      tags: destroy_networks
+
+# Add iptables rules delition
+
     - name: Stop containers
       docker_compose:
         project_src: /home/{{ user }}/ad-infrastructure/
