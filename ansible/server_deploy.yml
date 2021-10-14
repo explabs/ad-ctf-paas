@@ -189,6 +189,7 @@
         chain: FORWARD
         in_interface: tun+
         jump: ACCEPT
+      tags: iptables
 
     - name: Define port forwarding from tun to team_br
       iptables:
@@ -196,8 +197,9 @@
         in_interface: tun+
         out_interface: team_br+
         match: state
-        ctstate: RELATED, ESTABLISHED
+        ctstate: ESTABLISHED,RELATED
         jump: ACCEPT
+      tags: iptables
 
     - name: Define port forwarding from team_br to tun
       iptables:
@@ -205,8 +207,9 @@
         in_interface:  team_br+
         out_interface: tun+
         match: state
-        ctstate: RELATED, ESTABLISHED
+        ctstate: ESTABLISHED,RELATED
         jump: ACCEPT
+      tags: iptables
 
     - name: Append chain
       iptables:
@@ -214,6 +217,7 @@
         action: append
         out_interface: tun+
         jump: ACCEPT
+      tags: iptables
 
     - name: Create hosts file for inner ansible-playbooks
       file:

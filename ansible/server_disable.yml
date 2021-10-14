@@ -22,11 +22,18 @@
       register: result
       tags: get_result
 
-    - name: Destroy networks
+    - name: Destroy team networks
       virt_net:
         command: destroy
-        name: team-br-"{{ item['name'] }}"
-      with_items: "{{ result.json.teams }}"
+        name: "{{ item['name'] }}"
+      with_items:
+        - "{{ result.json.teams }}"
+      tags: destroy_networks
+
+    - name: Destroy default network
+      virt_net:
+        command: destroy
+        name: default
       tags: destroy_networks
 
     - name: Stop containers
