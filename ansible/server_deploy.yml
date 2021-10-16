@@ -224,6 +224,7 @@
         mode: '554'
 
     - name: Build and run vm`s with terraform
+      become: true
       terraform:
         project_path: /home/{{ user }}/ad-infrastructure/terraform/
         state: present
