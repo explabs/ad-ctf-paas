@@ -16,7 +16,7 @@ const config = {
   organizationName: 'Organization', // Usually your GitHub org/user name.
   projectName: 'ad-infrastructure', // Usually your repo name.
   i18n: {
-    defaultLocale: 'ru',
+    defaultLocale: 'en',
     locales: ['ru', 'en'],
   },
   presets: [
@@ -55,11 +55,22 @@ const config = {
         items: [
           {
             type: 'doc',
-            docId: 'intro',
+            docId: 'guide/main',
             position: 'left',
-            label: 'Руководство',
+            label: 'Guide',
           },
-          {to: '/blog', label: 'Блог', position: 'left'},
+          {
+            type: 'doc',
+            docId: 'rules/main',
+            position: 'left',
+            label: 'Rules',
+          },
+          {
+            type: 'doc',
+            docId: 'docs/main',
+            position: 'left',
+            label: 'Docs',
+          },
           {
             type: 'localeDropdown',
             position: 'left'

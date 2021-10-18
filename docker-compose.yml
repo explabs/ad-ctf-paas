@@ -2,7 +2,7 @@ version: '3'
 services:
   ad-api:
     build:
-      context: ad-infrastructure-api
+      context: ad-ctf-paas-api
     container_name: ad-api
     environment:
       - ADMIN_PASS=${ADMIN_PASS}
@@ -15,9 +15,9 @@ services:
       - "80:8080"
     volumes:
       - ./terraform/:/terraform
-      - ./ad-infrastructure-api/config.yml:/api/config.yml
-      - ./ad-infrastructure-api/walker.yml:/api/walker.yml
-      - ./ad-infrastructure-api/checker.yml:/api/checker.yml
+      - ./ad-ctf-paas-api/config.yml:/api/config.yml
+      - ./ad-ctf-paas-api/walker.yml:/api/walker.yml
+      - ./ad-ctf-paas-api/checker.yml:/api/checker.yml
 
   mongo:
     image: mongo:5.0
