@@ -218,6 +218,7 @@
         jump: ACCEPT
       tags: iptables
 
+<<<<<<< HEAD
     - name: Capturing Terraform Command
       command: which terraform
       register: _terraform_command
@@ -276,3 +277,25 @@
       when: >
         _terraform_plan['rc'] == 2 and
         terraform_apply
+=======
+    - name: Create hosts file for inner ansible-playbooks
+      file:
+        path: /home/{{ user }}/ad-infrastructure/ansible/vm_hosts.ini
+        state: touch
+        mode: '554'
+
+    - name: Terraforn init
+      become: true
+      shell: |
+          chdir=/home/{{ user }}/ad-infrastructure/terraform/
+          terraform init -upgrade
+      tags: terraform_init
+      ignore_errors: yes
+
+    - name: Apply plan and run vm`s with terraform
+      become: true
+      shell: |
+        chdir=/home/{{ user }}/ad-infrastructure/terraform/
+        terraform apply -auto-approve
+      tags: terraform_deploy
+>>>>>>> 8d0063cc3f67079076c75cbf56a4af25be327297
