@@ -223,6 +223,13 @@
         state: touch
         mode: '554'
 
+
+    - name: Terraforn init
+      become: true
+      shell:
+        chdir=/home/{{ user }}/ad-infrastructure/terraform/ terraform init
+      tags: terraform_init
+      
     - name: Build and run vm`s with terraform
       become: true
       terraform:
