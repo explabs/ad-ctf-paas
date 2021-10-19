@@ -7,7 +7,12 @@ users:
     sudo: ALL=(ALL) NOPASSWD:ALL
     ssh_authorized_keys:
       - ${auth_key}
-      - ${admin_key}
     shell: /bin/bash
+  - name: ansible
+      ssh_authorized_keys:
+        - ${admin_key}
+      sudo: [ 'ALL=(ALL) NOPASSWD:ALL' ]
+      shell: /bin/bash
+      groups: wheel
 ssh_pwauth: false
 disable_root: true

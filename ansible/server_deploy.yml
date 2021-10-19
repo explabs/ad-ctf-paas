@@ -64,16 +64,17 @@
         update_cache: yes
         name: terraform
 
-    - name: Create ad-infrastructure dir on monitoring_server
+    - name: Create ad-ctf-paas dir on monitoring_server
       file:
-        path: ~/ad-infrastructure
+        path: /home/{{ user }}/ad-ctf-paas/
         state: directory
         mode: '0755'
+      tags: upload_files
 
     - name: Upload necessary directories to monitoring_server
       copy:
         src: ../{{ item }}
-        dest: /home/{{ user }}/ad-infrastructure/
+        dest: /home/{{ user }}/ad-ctf-paas/
       with_items:
         - ansible
         - ad-ctf-paas-api
@@ -89,18 +90,18 @@
 
     - name: Check that iso_image exists
       stat:
-        path: /home/{{ user }}/ad-infrastructure/terraform/{{ iso_image }}
+        path: /home/{{ user }}/ad-ctf-paas/terraform/{{ iso_image }}
       register: image_check
 
     - name: Download .iso image if it doesn`t exists
       get_url:
         url:  '{{ wget_image }}'
-        dest: /home/{{ user }}/ad-infrastructure/terraform/
+        dest: /home/{{ user }}/ad-ctf-paas/terraform/
       when: not image_check.stat.exists
 
 
     - name: Resize .iso image
-      command: chdir=/home/{{ user }}/ad-infrastructure/terraform/ sudo qemu-img resize {{ iso_image }} {{ image_size }}
+      command: chdir=/home/{{ user }}/ad-ctf-paas/terraform/ sudo qemu-img resize {{ iso_image }} {{ image_size }}
 
     - name: OpenDistro max_map_count user
       sysctl:
@@ -109,13 +110,13 @@
 
     - name: Stop current containers
       docker_compose:
-        project_src: /home/{{ user }}/ad-infrastructure/
+        project_src: /home/{{ user }}/ad-ctf-paas/
         state: absent
       tags: deploy_api
 
     - name: Run api
       docker_compose:
-        project_src: /home/{{ user }}/ad-infrastructure/
+        project_src: /home/{{ user }}/ad-ctf-paas/
         build: yes
         services:
           - mongo
@@ -127,7 +128,7 @@
 
     - name: Run ad-api
       docker_compose:
-        project_src: /home/{{ user }}/ad-infrastructure/
+        project_src: /home/{{ user }}/ad-ctf-paas/
         build: yes
         services:
           - ad-api
@@ -136,7 +137,7 @@
 
     - name: Run monitoring
       docker_compose:
-        project_src: /home/{{ user }}/ad-infrastructure/
+        project_src: /home/{{ user }}/ad-ctf-paas/
         build: yes
         services:
           - node1
@@ -217,23 +218,61 @@
         jump: ACCEPT
       tags: iptables
 
-    - name: Create hosts file for inner ansible-playbooks
-      file:
-        path: /home/{{ user }}/ad-infrastructure/ansible/vm_hosts.ini
-        state: touch
-        mode: '554'
-    
-    - name: Terraforn init
-      become: true
-      shell: |
-          chdir=/home/{{ user }}/ad-infrastructure/terraform/ 
-          terraform init -upgrade
-      tags: terraform_init
-      ignore_errors: yes
+    - name: Capturing Terraform Command
+      command: which terraform
+      register: _terraform_command
+      changed_when: false
+      tags:
+        - terraform_apply
+        - terraform_destroy
+        - terraform_init
+        - terraform_inventory
+        - terraform_plan
 
-    - name: apply plan and run vm`s with terraform
-      become: true
-      shell: |
-        chdir=/home/{{ user }}/ad-infrastructure/terraform/
-        terraform apply -auto-approve
-      tags: terraform_deploy
+    - name: Setting Terraform Command Path
+      set_fact:
+        terraform_command: "{{ _terraform_command['stdout'] }}"
+      tags:
+        - terraform_apply
+        - terraform_destroy
+        - terraform_init
+        - terraform_inventory
+        - terraform_plan
+
+    - name: Capturing Terraform Init State
+      command: "{{ terraform_command }} init -get=true -input=false"
+      register: _terraform_init_state
+      changed_when: true
+      args:
+        chdir: "{{ terraform_dir }}"
+      tags:
+        - terraform_init
+
+    - name: Running Terraform Plan
+      command: "{{ terraform_command }} plan -out=tfplan -input=false -detailed-exitcode"
+      register: _terraform_plan
+      changed_when: false
+      args:
+        chdir: "{{ terraform_dir }}"
+      tags:
+        - terraform_apply
+        - terraform_plan
+      failed_when: _terraform_plan['rc'] > 2
+
+    - name: Displaying Terraform Plan
+      debug: var=_terraform_plan
+      tags:
+        - terraform_apply
+        - terraform_plan
+
+    - name: Applying Terraform Plan
+      command: "{{ terraform_command }} apply -input=false -auto-approve=true tfplan"
+      register: _terraform_apply
+      changed_when: false
+      args:
+        chdir: "{{ terraform_dir }}"
+      tags:
+        - terraform_apply
+      when: >
+        _terraform_plan['rc'] == 2 and
+        terraform_apply

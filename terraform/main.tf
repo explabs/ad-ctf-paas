@@ -102,7 +102,7 @@ resource "libvirt_domain" "os-domain" {
    connection {
      type        = "ssh"
      host        = var.ips[count.index]
-     user        = var.teams[count.index]
+     user        = "ansible"
      private_key = file("${abspath(path.module)}/keys/org_key/org")
    }
  }
