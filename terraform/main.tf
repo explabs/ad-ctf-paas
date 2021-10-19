@@ -40,6 +40,7 @@ resource "libvirt_cloudinit_disk" "commoninit" {
   user_data = templatefile("${path.module}/config/init.yml", {
     host_name = var.teams[count.index]
     auth_key = file("${abspath(path.module)}/keys/${var.teams[count.index]}.pub")
+    admin_key = file("${abspath(path.module)}/keys/org.pub")
     name = var.teams[count.index]
   })
   network_config = templatefile("${path.module}/config/network_config.yml", {
@@ -95,18 +96,19 @@ resource "libvirt_domain" "os-domain" {
   }
 
  provisioner "remote-exec" {
-   inline = ["sudo apt update", "sudo apt install python3 -y", "echo Python3 Installed"]
+    inline = ["ls -la"
+    ]
+   #inline = ["sudo apt update", "sudo apt install python3 -y", "echo Python3 Installed"]
    connection {
      type        = "ssh"
      host        = var.ips[count.index]
      user        = var.teams[count.index]
-     #  Add master key to all vm`s(?)
-     private_key = file("${abspath(path.module)}/keys/${var.teams[count.index]}.pub")
+     private_key = file("${abspath(path.module)}/keys/org_key/org")
    }
  }
 
  provisioner "local-exec" {
    #  Add master ket to all vm`s(?)
-   command = "ansible-playbook -u ${var.teams[count.index]} -i '${var.ips[count.index]},' --private-key ${file("${abspath(path.module)}/keys/${var.teams[count.index]}.pub")} vm_packages_installation.yml"
+   command = "ansible-playbook -u ${var.teams[count.index]} -i '${var.ips[count.index]},' --private-key ${file("${abspath(path.module)}/keys/org_key/org")} vm_packages_installation.yml"
  }
 }

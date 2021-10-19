@@ -76,7 +76,7 @@
         dest: /home/{{ user }}/ad-infrastructure/
       with_items:
         - ansible
-        - ad-infrastructure-api
+        - ad-ctf-paas-api
         - ovpn-admin
         - monitoring
         - tasks
@@ -89,18 +89,18 @@
 
     - name: Check that iso_image exists
       stat:
-        path: /home/{{ user }}/ad-infrastructure/{{ iso_image }}
+        path: /home/{{ user }}/ad-infrastructure/terraform/{{ iso_image }}
       register: image_check
 
     - name: Download .iso image if it doesn`t exists
       get_url:
         url:  '{{ wget_image }}'
-        dest: /home/{{ user }}/ad-infrastructure/
+        dest: /home/{{ user }}/ad-infrastructure/terraform/
       when: not image_check.stat.exists
 
 
     - name: Resize .iso image
-      command: chdir=/home/{{ user }}/ad-infrastructure sudo qemu-img resize {{ iso_image }} {{ image_size }}
+      command: chdir=/home/{{ user }}/ad-infrastructure/terraform/ sudo qemu-img resize {{ iso_image }} {{ image_size }}
 
     - name: OpenDistro max_map_count user
       sysctl:
@@ -152,7 +152,7 @@
 
     - name: Define JSON response
       uri:
-        url: "http://192.168.100.116:8000/api/v1/services/teams/info"  #  This is test URL, change in to your production URL
+        url: "http://192.168.101.12:8080/api/v1/services/teams/info"  #  This is test URL, change in to your production URL
         method: GET
         headers:
           Content-Type: "application/json"
@@ -223,25 +223,17 @@
         state: touch
         mode: '554'
     
-    - name: Create terraform plan to build kvms
+    - name: Terraforn init
       become: true
-      terraform:
-        project_path: /home/{{ user }}/ad-infrastructure/terraform/
-        plan_file: /home/{{ user }}/ad-infrastructure/terraform/
-        state: planned
-      tags: terraform_plan
-
-    - name: Confirm terraform plan is present
-      wait_for:
-        path: /home/{{ user }}/ad-infrastructure/terraform/out.plan
-        state: present
-      tags: terraform_plan
+      shell: |
+          chdir=/home/{{ user }}/ad-infrastructure/terraform/ 
+          terraform init -upgrade
+      tags: terraform_init
+      ignore_errors: yes
 
     - name: apply plan and run vm`s with terraform
       become: true
-      terraform:
-        project_path: /home/{{ user }}/ad-infrastructure/terraform/
-        plan_file: /home/{{ user }}/ad-infrastructure/terraform/out.plan
-        state: present
-        force_init: true
+      shell: |
+        chdir=/home/{{ user }}/ad-infrastructure/terraform/
+        terraform apply -auto-approve
       tags: terraform_deploy
