@@ -222,18 +222,26 @@
         path: /home/{{ user }}/ad-infrastructure/ansible/vm_hosts.ini
         state: touch
         mode: '554'
-
-
-    - name: Terraforn init
-      become: true
-      shell:
-        chdir=/home/{{ user }}/ad-infrastructure/terraform/ terraform init
-      tags: terraform_init
-      
-    - name: Build and run vm`s with terraform
+    
+    - name: Create terraform plan to build kvms
       become: true
       terraform:
         project_path: /home/{{ user }}/ad-infrastructure/terraform/
+        plan_file: /home/{{ user }}/ad-infrastructure/terraform/
+        state: planned
+      tags: terraform_plan
+
+    - name: Confirm terraform plan is present
+      wait_for:
+        path: /home/{{ user }}/ad-infrastructure/terraform/out.plan
+        state: present
+      tags: terraform_plan
+
+    - name: apply plan and run vm`s with terraform
+      become: true
+      terraform:
+        project_path: /home/{{ user }}/ad-infrastructure/terraform/
+        plan_file: /home/{{ user }}/ad-infrastructure/terraform/out.plan
         state: present
         force_init: true
       tags: terraform_deploy

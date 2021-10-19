@@ -1,6 +1,6 @@
 
 variable "teams" {
-  default = ["first", "second"]
+  default = ["naliway", "nakateam"]
 }
 variable "ips" {
   default = ["10.0.1.10", "10.0.2.10"]
