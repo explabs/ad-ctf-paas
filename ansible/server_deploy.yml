@@ -222,16 +222,16 @@
         path: /home/{{ user }}/ad-infrastructure/ansible/vm_hosts.ini
         state: touch
         mode: '554'
-    
+
     - name: Terraforn init
       become: true
       shell: |
-          chdir=/home/{{ user }}/ad-infrastructure/terraform/ 
+          chdir=/home/{{ user }}/ad-infrastructure/terraform/
           terraform init -upgrade
       tags: terraform_init
       ignore_errors: yes
 
-    - name: apply plan and run vm`s with terraform
+    - name: Apply plan and run vm`s with terraform
       become: true
       shell: |
         chdir=/home/{{ user }}/ad-infrastructure/terraform/
