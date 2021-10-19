@@ -1,6 +1,6 @@
 import jinja2
 
-with open('network.xml.j2') as file_:
+with open('../network.xml.j2') as file_:
     template = jinja2.Template(file_.read())
 
 for i in range(1, 3):
