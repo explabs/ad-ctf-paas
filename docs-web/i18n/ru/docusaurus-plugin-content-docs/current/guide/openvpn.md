@@ -24,19 +24,28 @@ sudo openvpn <path_to_filename>.ovpn
 ```
 3. После запуска файла необходимо пройти аутентификацию.
 Username и Password, выданные администратором.
-
-![скрин 1](/img/images/VPN_1.png)
+```
+Enter Auth Username:
+Enter Auth Password: (press TAB for no echo)
+```
 
 
 ### Пример правильного подключения:
-При корректном вводе данных и правильном указании сети курсор будет находиться в начале новой строки.
+Пример корректного ввода данных (курсор будет находиться в начале новой строки):
 
-![скрин 2](/img/images/VPN_2.png)
+```
+Tue Oct 26 04:14:51 2021 us=797713 Initialization Sequence Completed
+
+```
 
 ### Проблемы при подключении OpenVPN
 При некорректном вводе имени пользователя или пароля, а также неправильном адресе сети программа выдаст ошибки, показанные ниже:
 
-![скрин 3](/img/images/VPN_3.png)
+```
+Error: Invalid prefix for given prefix length.
+Tue Oct 26 04:12:25 2021 us=378155 ERROR: Linux route add command faild: external program exited with error status: 2
+Tue Oct 26 04:12:25 2021 us=378210 Initialization Sequence Completed
+```
 
 ## Инструкция по установке OpenVPN на Windows
 Данная инструкция демонстрирует, как подключиться к серверу ретрансляции VPN Gate, используя клиент OpenVPN в системах Windows XP, 7, 8, 10, Server 2003, 2008, 2012.
@@ -67,3 +76,4 @@ Username и Password, выданные администратором.
 
 ![скрин 8](/img/images/VPN_8.png)
 
+Безопасное подключение - это просто!
