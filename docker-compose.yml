@@ -105,17 +105,22 @@ services:
     networks:
       - test-net
 
-  prometheus:
-    container_name: prometheus
-    image: prom/prometheus
+  prometheus-manager:
+    container_name: prometheus-manager
+    build:
+      context: prometheus-manager
     volumes:
-      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
-      - ./monitoring/data/prometheus:/data
+      - /var/run/docker.sock:/var/run/docker.sock
+      #- ./monitoring:/app/monitoring
+#      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+#      - ./monitoring/data/prometheus:/data
+    environment:
+      DATA: monitoring/prometheus/data
+      CONFIG: monitoring/prometheus/prometheus.yml
+      HOST_PWD: $PWD
     ports:
-      - "9090:9090"
+      - "9091:9091"
     restart: unless-stopped
-    networks:
-      - test-net
 
   grafana:
     container_name: grafana
@@ -125,8 +130,6 @@ services:
       - ./monitoring/grafana/datasource.yml:/etc/grafana/provisioning/datasources/datasource.yaml
     ports:
       - "3000:3000"
-    links:
-      - prometheus
     networks:
       - test-net
 
