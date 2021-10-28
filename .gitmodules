@@ -4,3 +4,6 @@
 [submodule "ovpn-admin"]
 	path = ovpn-admin
 	url = git@github.com:explabs/ovpn-admin.git
+[submodule "prometheus-manager"]
+	path = prometheus-manager
+	url = git@github.com:explabs/prometheus-manager.git
