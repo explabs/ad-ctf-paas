@@ -118,6 +118,7 @@ services:
       DATA: monitoring/prometheus/data
       CONFIG: monitoring/prometheus/prometheus.yml
       HOST_PWD: $PWD
+      ADMIN_PASS: $ADMIN_PASS
     ports:
       - "9091:9091"
     restart: unless-stopped
