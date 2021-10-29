@@ -7,3 +7,5 @@ data/
 server_rsa
 server_facts
 .env
+monitoring/prometheus/data/
+!monitoring/prometheus/data/.gitkeep
