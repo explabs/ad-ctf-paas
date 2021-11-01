@@ -17,7 +17,11 @@ def user():
 @app.route("/user/<route>")
 def get_user(route):
     if request.method == "GET":
-        return flag[route]
+        try:
+            return flag[route]
+        except KeyError:
+            return f"can't find {route} in {flag}"
+
 
 
 if __name__ == '__main__':
