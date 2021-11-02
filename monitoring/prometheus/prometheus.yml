@@ -7,9 +7,31 @@ scrape_configs:
     static_configs:
       - targets:
           - localhost:9090
-      
+
   - job_name: checker
-    metrics_path: api/v1/checker
+    metrics_path: api/v1/game/checker
+    static_configs:
+      - targets:
+          - 192.168.100.105:8080
+    basic_auth:
+      username: 'checker'
+      password: 'test'
+
+  - job_name: exploit
+    metrics_path: api/v1/game/exploit
+    scrape_interval: 1m
+    scrape_timeout: 10s
+    static_configs:
+      - targets:
+          - 192.168.100.105:8080
+    basic_auth:
+      username: 'checker'
+      password: 'test'
+
+  - job_name: news
+    metrics_path: api/v1/game/news
+    scrape_interval: 1m
+    scrape_timeout: 10s
     static_configs:
       - targets:
           - 192.168.100.105:8080
