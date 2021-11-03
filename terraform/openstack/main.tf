@@ -1,61 +1,29 @@
-terraform {
-required_version = ">= 0.14.0"
-  required_providers {
-    openstack = {
-      source  = "terraform-provider-openstack/openstack"
-      version = "1.33.0"
-    }
-  }
-}
+resource "openstack_compute_instance_v2" "test" {
+  count = length(var.teams)
+  name            = format("vm%d", count.index)
+  image_name      = "cirros-0.5.2-x86_64-disk"
+  flavor_name     = "m1.tiny"
+  key_pair        = "demo"
+  user_data = templatefile("${path.module}/../config/init.yml", {
+    host_name = var.teams[count.index]
+    auth_key = file("${abspath(path.module)}/../keys/${var.teams[count.index]}.pub")
+    admin_key = file("${abspath(path.module)}/../keys/org.pub")
+    name = var.teams[count.index]
+  })
 
-provider "openstack" {
-  user_name = "demo"
-  password = "password"
-  user_domain_id = "default"
-  auth_url = "http://192.168.100.105/identity"
-  region = "RegionOne"
-  tenant_name = "demo"
-}
-
-resource "openstack_blockstorage_volume_v2" "my_volume" {
-  name = "my_volume"
-  size = 3
-}
-
-resource "openstack_networking_port_v2" "port_1" {
-  name           = "port_1"
-  network_id     = "${openstack_networking_network_v2.network_1.id}"
-  admin_state_up = "true"
-}
-
-resource "openstack_compute_keypair_v2" "test-keypair" {
-  name       = "my-keypair"
-}
-
-resource "openstack_networking_network_v2" "network_1" {
-  name           = "network_1"
-  admin_state_up = "true"
-}
-
-resource "openstack_compute_instance_v2" "my_instance" {
-    name      = "my_instance"
-    region    = "RegionOne"
-    image_id  = "e0718133-3b7b-4677-bb21-95188b770716"
-    flavor_id = "42"
-    key_pair  = "${openstack_compute_keypair_v2.test-keypair.name}"
-    security_groups = ["default"]
 
   network {
-    name = "public"
+    name = "private"
+    access_network = true
   }
-  
 }
-resource "openstack_compute_volume_attach_v2" "attached" {
-  instance_id = "${openstack_compute_instance_v2.my_instance.id}"
-  volume_id   = "${openstack_blockstorage_volume_v2.my_volume.id}"
+resource "openstack_networking_floatingip_v2" "fip" {
+  count = length(var.teams)
+  pool = "public"
 }
-
-resource "openstack_compute_interface_attach_v2" "ai_1" {
-  instance_id = "${openstack_compute_instance_v2.my_instance.id}"
-  network_id  = "${openstack_networking_port_v2.port_1.id}"
+resource "openstack_compute_floatingip_associate_v2" "fip" {
+  count = length(var.teams)
+  floating_ip = openstack_networking_floatingip_v2.fip.*.address[count.index]
+  instance_id = openstack_compute_instance_v2.test.*.id[count.index]
 }
+#openstack server create --nic net-id=b5d27bec-5627-450d-939d-cc319ab92527 --flavor 1 --image e0718133-3b7b-4677-bb21-95188b770716 --key-name test test1
