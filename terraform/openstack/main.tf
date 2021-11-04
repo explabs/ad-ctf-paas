@@ -1,16 +1,15 @@
+resource "openstack_compute_keypair_v2" "users-keypairs" {
+  count = length(var.teams)
+  name       = format("%s-keypair", var.teams[count.index])
+  public_key = file("${abspath(path.module)}/../keys/${var.teams[count.index]}.pub")
+}
+
 resource "openstack_compute_instance_v2" "test" {
   count = length(var.teams)
   name            = format("vm%d", count.index)
-  image_name      = "cirros-0.5.2-x86_64-disk"
-  flavor_name     = "m1.tiny"
-  key_pair        = "demo"
-  user_data = templatefile("${path.module}/../config/init.yml", {
-    host_name = var.teams[count.index]
-    auth_key = file("${abspath(path.module)}/../keys/${var.teams[count.index]}.pub")
-    admin_key = file("${abspath(path.module)}/../keys/org.pub")
-    name = var.teams[count.index]
-  })
-
+  image_name      = "ubuntu-custom"
+  flavor_name     = "m1.medium"
+  key_pair = openstack_compute_keypair_v2.users-keypairs.*.name[count.index]
 
   network {
     name = "private"
