@@ -161,6 +161,17 @@ services:
       - ./openvpn/easyrsa_master:/mnt/easyrsa
       - ./openvpn/ccd_master:/mnt/ccd
 
+  fileserver:
+    container_name: fileserver
+    build: 
+      context: fileserver
+    volumes:
+      - ./tasks:/app
+    ports:
+      - "8081:8081"
+    restart: unless-stopped
+      
+
 volumes:
   test-data1:
   test-data2:
