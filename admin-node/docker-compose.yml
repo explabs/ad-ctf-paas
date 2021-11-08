@@ -166,7 +166,7 @@ services:
     build: 
       context: fileserver
     volumes:
-      - ./tasks:/app
+      - ../tasks:/app
     ports:
       - "8081:8081"
     restart: unless-stopped

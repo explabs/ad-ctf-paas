@@ -7,3 +7,6 @@
 [submodule "prometheus-manager"]
 	path = admin-node/prometheus-manager
 	url = git@github.com:explabs/prometheus-manager.git
+[submodule "admin-node/fileserver"]
+	path = admin-node/fileserver
+	url = git@github.com:explabs/fileserver.git
