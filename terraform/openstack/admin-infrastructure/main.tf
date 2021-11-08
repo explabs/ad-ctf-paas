@@ -32,7 +32,7 @@ resource "openstack_compute_instance_v2" "admin" {
 resource "null_resource" "copy" {
   depends_on = [openstack_compute_instance_v2.admin]
   provisioner "file" {
-    source      = "../../../tasks"
+    source      = "../../../admin-node"
     destination = "/home/org/"
 
     connection {
