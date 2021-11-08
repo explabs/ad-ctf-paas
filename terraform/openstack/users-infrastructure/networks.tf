@@ -43,28 +43,3 @@ resource "openstack_networking_port_v2" "ports" {
     ip_address = var.ips[count.index]
   }
 }
-
-#resource "openstack_networking_port_v2" "subports" {
-#  count          = length(var.teams)
-#  depends_on = [
-#    openstack_networking_subnet_v2.subnets,
-#  ]
-#
-#  name           = format("subport-%d", count.index)
-#  network_id     = data.openstack_networking_network_v2.network.id
-#  admin_state_up = "true"
-#}
-#
-#resource "openstack_networking_trunk_v2" "trunk_1" {
-#
-#  count          = length(var.teams)
-#  name           = format("trunk-%d", count.index)
-#  admin_state_up = "true"
-#  port_id        = openstack_networking_port_v2.ports.*.id[count.index]
-#
-#  sub_port {
-#    port_id           = openstack_networking_port_v2.subports.*.id[count.index]
-#    segmentation_id   = count.index + 2
-#    segmentation_type = "vlan"
-#  }
-#}

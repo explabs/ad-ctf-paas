@@ -10,12 +10,6 @@ data "template_cloudinit_config" "users_cloudinit" {
   }
 }
 
-#resource "openstack_compute_keypair_v2" "users-keypairs" {
-#  count      = length(var.teams)
-#  name       = format("%s-keypair", var.teams[count.index])
-#  public_key = file("${abspath(path.module)}/../../keys/${var.teams[count.index]}.pub")
-#}
-
 resource "openstack_compute_instance_v2" "users" {
   count       = length(var.teams)
   name        = format("users-vm%d", count.index)
