@@ -1,8 +1,9 @@
-version: '3'
+version: '3.7'
 services:
   ad-api:
     build:
       context: ad-ctf-paas-api
+      network: host
     container_name: ad-api
     environment:
       - ADMIN_PASS=${ADMIN_PASS}
@@ -109,6 +110,7 @@ services:
     container_name: prometheus-manager
     build:
       context: prometheus-manager
+      network: host
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       #- ./monitoring:/app/monitoring
@@ -139,6 +141,7 @@ services:
     build:
       context: ovpn-admin
       dockerfile: Dockerfile.openvpn
+      network: host
     image: openvpn:local
     command: /etc/openvpn/setup/configure.sh
     cap_add:
@@ -154,6 +157,7 @@ services:
     container_name: ovpn-admin
     build:
       context: ovpn-admin
+      network: host
     image: ovpn-admin:local
     command: /app/ovpn-admin --listen.port="9000" --ovpn.server="${SERVER_IP}:7777:tcp" --easyrsa.path="/mnt/easyrsa" --easyrsa.index-path="/mnt/easyrsa/pki/index.txt" --ccd --ccd.path="/mnt/ccd" --auth.password --auth.db="/mnt/easyrsa/pki/users.db"
     network_mode: service:openvpn
@@ -165,6 +169,7 @@ services:
     container_name: fileserver
     build: 
       context: fileserver
+      network: host
     volumes:
       - ../tasks:/tasks
     ports:
