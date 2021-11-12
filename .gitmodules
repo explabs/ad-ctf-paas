@@ -1,9 +1,12 @@
 [submodule "ad-ctf-paas-api"]
-	path = ad-ctf-paas-api
+	path = admin-node/ad-ctf-paas-api
 	url = git@github.com:explabs/ad-ctf-paas-api.git
 [submodule "ovpn-admin"]
-	path = ovpn-admin
+	path = admin-node/ovpn-admin
 	url = git@github.com:explabs/ovpn-admin.git
 [submodule "prometheus-manager"]
-	path = prometheus-manager
+	path = admin-node/prometheus-manager
 	url = git@github.com:explabs/prometheus-manager.git
+[submodule "admin-node/fileserver"]
+	path = admin-node/fileserver
+	url = git@github.com:explabs/fileserver.git
