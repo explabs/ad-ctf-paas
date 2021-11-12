@@ -2,7 +2,7 @@ data "template_cloudinit_config" "users_cloudinit" {
   count = length(var.teams)
   part {
     content_type = "text/cloud-config"
-    content = templatefile("${abspath(path.module)}/../config/init.yml", {
+    content = templatefile("${abspath(path.module)}/../config/user_init.yml", {
       host_name = var.teams[count.index]
       auth_key = file("${abspath(path.module)}/../../keys/${var.teams[count.index]}.pub")
       name = "team"
@@ -13,8 +13,8 @@ data "template_cloudinit_config" "users_cloudinit" {
 resource "openstack_compute_instance_v2" "users" {
   count       = length(var.teams)
   name        = format("users-vm%d", count.index)
-  image_name  = "ubuntu-custom"
-  flavor_name = "m1.medium"
+  image_name  = var.os_image
+  flavor_name = var.flavour_name
 #  key_pair    = openstack_compute_keypair_v2.users-keypairs.*.name[count.index]
   user_data = data.template_cloudinit_config.users_cloudinit.*.rendered[count.index]
 
@@ -25,7 +25,7 @@ resource "openstack_compute_instance_v2" "users" {
 }
 resource "openstack_networking_floatingip_v2" "fip" {
   count = length(var.teams)
-  pool  = "public"
+  pool  = var.external_network_name
 }
 resource "openstack_compute_floatingip_associate_v2" "fip" {
   count       = length(var.teams)

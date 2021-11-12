@@ -19,9 +19,31 @@ resource "openstack_networking_router_interface_v2" "router_interface" {
   subnet_id = openstack_networking_subnet_v2.subnets.*.id[count.index]
 }
 
-data openstack_networking_secgroup_v2 "secgroup"{
-  name = "all-open"
+resource openstack_compute_secgroup_v2 "secgroup" {
+  name        = "allow-ssh-and-http"
+  description = "Allow ssh and http traffic from everywhere"
+
+  rule {
+    from_port   = 22
+    to_port     = 22
+    ip_protocol = "tcp"
+    cidr        = "0.0.0.0/0"
+  }
+
+  rule {
+    from_port   = 80
+    to_port     = 80
+    ip_protocol = "tcp"
+    cidr        = "0.0.0.0/0"
+  }
+  rule {
+    from_port   = -1
+    to_port     = -1
+    ip_protocol = "icmp"
+    cidr        = "0.0.0.0/0"
+  }
 }
+
 
 
 resource "openstack_networking_subnet_route_v2" "subnet_route" {
@@ -36,7 +58,7 @@ resource "openstack_networking_port_v2" "ports" {
   name           = format("port-%d", count.index)
   network_id     = data.openstack_networking_network_v2.network.id
   admin_state_up = "true"
-  security_group_ids = [data.openstack_networking_secgroup_v2.secgroup.id]
+  security_group_ids = [openstack_compute_secgroup_v2.secgroup.id]
 
   fixed_ip {
     subnet_id  = openstack_networking_subnet_v2.subnets.*.id[count.index]

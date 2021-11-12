@@ -1,3 +1,7 @@
+data "openstack_networking_network_v2" "network" {
+  name = var.external_network_name
+}
+
 resource "openstack_networking_network_v2" "network" {
   name           = "game-network"
   admin_state_up = "true"
@@ -12,7 +16,7 @@ resource "openstack_networking_subnet_v2" "subnets" {
 
 resource "openstack_networking_router_v2" "router" {
   name                = "game-router"
-  external_network_id = "217fd86d-3c23-4867-9179-22fd23c454c8"
+  external_network_id = data.openstack_networking_network_v2.network.id
 }
 
 resource "openstack_networking_router_interface_v2" "router_interface" {
@@ -20,15 +24,54 @@ resource "openstack_networking_router_interface_v2" "router_interface" {
   subnet_id = openstack_networking_subnet_v2.subnets.id
 }
 
-data openstack_networking_secgroup_v2 "secgroup"{
-  name = "all-open"
+resource openstack_compute_secgroup_v2 "secgroup" {
+  name        = "allow-ssh-and-http"
+  description = "Allow ssh and http traffic from everywhere"
+
+  rule {
+    from_port   = 22
+    to_port     = 22
+    ip_protocol = "tcp"
+    cidr        = "0.0.0.0/0"
+  }
+
+  rule {
+    from_port   = 80
+    to_port     = 80
+    ip_protocol = "tcp"
+    cidr        = "0.0.0.0/0"
+  }
+  rule {
+    from_port   = 8081
+    to_port     = 8081
+    ip_protocol = "tcp"
+    cidr        = "0.0.0.0/0"
+  }
+  rule {
+    from_port   = 9000
+    to_port     = 9000
+    ip_protocol = "tcp"
+    cidr        = "0.0.0.0/0"
+  }
+  rule {
+    from_port   = 7777
+    to_port     = 7777
+    ip_protocol = "tcp"
+    cidr        = "0.0.0.0/0"
+  }
+  rule {
+    from_port   = -1
+    to_port     = -1
+    ip_protocol = "icmp"
+    cidr        = "0.0.0.0/0"
+  }
 }
 
 resource "openstack_networking_port_v2" "port" {
-  name           = "admin-port"
-  network_id     = openstack_networking_network_v2.network.id
-  admin_state_up = "true"
-  security_group_ids = [data.openstack_networking_secgroup_v2.secgroup.id]
+  name               = "admin-port"
+  network_id         = openstack_networking_network_v2.network.id
+  admin_state_up     = "true"
+  security_group_ids = [openstack_compute_secgroup_v2.secgroup.id]
 
   fixed_ip {
     subnet_id  = openstack_networking_subnet_v2.subnets.id

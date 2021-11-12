@@ -22,7 +22,7 @@ runcmd:
   - chmod +x /usr/local/bin/docker-compose
   # Install autocompletion
   - curl -L https://raw.githubusercontent.com/docker/compose/1.29.2/contrib/completion/bash/docker-compose > /etc/bash_completion.d/docker-compose
-  - curl -s http://10.0.0.10/file.tgz | tar xvf - -C dest/
+  - curl -s http://10.0.0.10:8081/tasks.tar.gz | tar -xz -C /home/${name}/
 ssh_pwauth: false
 disable_root: true
 power_state:

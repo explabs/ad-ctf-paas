@@ -1,0 +1,20 @@
+$script = <<-SCRIPT
+sudo apt -y install git curl ca-certificates python3-dev  build-essential
+git clone https://opendev.org/openstack/devstack
+cd devstack/
+curl https://docs.openstack.org/devstack/latest/_downloads/d6fbba8d6ab5e970a86dd2ca0b884098/local.conf -o local.conf
+echo HOST_IP=$(hostname -I | awk '{print $2}') >> local.conf
+ADMIN_PASSWORD=admin
+ls -la
+pwd
+./stack.sh
+SCRIPT
+Vagrant.configure("2") do |config|
+  config.vm.box = "ubuntu/focal64"
+  config.vm.provider "virtualbox" do |v|
+    v.memory = 8192
+    v.cpus = 4
+  end
+  config.vm.network "public_network"
+  config.vm.provision "shell", inline: $script, privileged: false
+end

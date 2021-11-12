@@ -171,7 +171,7 @@ services:
       context: fileserver
       network: host
     volumes:
-      - ../tasks:/tasks
+      - ./tasks:/tasks
     ports:
       - "8081:8081"
     restart: unless-stopped
