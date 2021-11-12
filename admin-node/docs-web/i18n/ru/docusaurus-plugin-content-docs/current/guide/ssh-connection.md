@@ -5,7 +5,6 @@ sidebar_position: 4
 # Подключение по SSH
 >  Secure Shell — «безопасная оболочка». Подключение по SSH выполняется с помощью утилиты ssh.
 
-## Для Linux
 Чтобы подключиться по SSH выполните команду:  
 ```
 ssh -i <private_key> user@ip
@@ -15,11 +14,18 @@ ssh -i <private_key> user@ip
 `ip` - IP устройства, к которому необходимо подключиться.
 
 Пример команды:
+
+### Для Linux
+```
+ssh -i /home/user/.ssh/id_rsab user@192.168.1.2
+```
+
+### Для Windows 
+
 ```
 ssh -i C:\Users\User\.ssh\id_rsa user@192.168.1.2
-```
-## Для Windows 
 
+```
 
  
 :::info
