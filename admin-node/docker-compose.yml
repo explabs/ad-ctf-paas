@@ -114,7 +114,7 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       #- ./monitoring:/app/monitoring
-#      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./monitoring/prometheus/:/etc/prometheus/
 #      - ./monitoring/data/prometheus:/data
     environment:
       DATA: monitoring/prometheus/data
