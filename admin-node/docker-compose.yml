@@ -19,6 +19,10 @@ services:
       - ./ad-ctf-paas-api/config.yml:/api/config.yml
       - ./ad-ctf-paas-api/walker.yml:/api/walker.yml
       - ./ad-ctf-paas-api/checker.yml:/api/checker.yml
+    depends_on:
+      - mongo
+      - redis
+      - prometheus-manager
 
   mongo:
     image: mongo:5.0
