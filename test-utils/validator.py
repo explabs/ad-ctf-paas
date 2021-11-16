@@ -5,6 +5,9 @@ import uuid
 
 
 class Colors:
+    """
+    List of cli colors
+    """
     HEADER = '\033[95m'
     OKBLUE = '\033[94m'
     OKCYAN = '\033[96m'
@@ -17,6 +20,10 @@ class Colors:
 
 
 class Logs:
+    """
+    Colored prints for pretty output
+    """
+
     def __init__(self):
         self.debug_msg = False
 
@@ -45,6 +52,10 @@ class Logs:
 
 
 class FlagsStorage:
+    """
+    Storage methods for emulate ad-api checker system
+    """
+
     def __init__(self):
         self.flags = list()
 
@@ -57,6 +68,10 @@ class FlagsStorage:
 
 
 class Validator:
+    """
+    Base Validator class for loads platform configs
+    """
+
     def __init__(self):
         # TODO: check .env exists
         self.api_folder = "admin-node/ad-ctf-paas-api/"
@@ -81,6 +96,10 @@ class Validator:
 
 
 class FieldsValidator(Validator):
+    """
+    Class for validate checker.yml correct syntax
+    """
+
     def __init__(self):
         super().__init__()
         self.check_failed = False
@@ -89,6 +108,7 @@ class FieldsValidator(Validator):
             ["name"]
         ]
 
+    # TODO: after removing of "name" from exploits keys deprecate recursion
     def check_names(self, data: dict, names: list):
         for field, data in data.items():
             for service in data:
@@ -114,6 +134,10 @@ def check_exec(script_path, argument):
 
 
 class ExecuteValidator(Validator):
+    """
+    Class for validate checkers scripts work
+    """
+
     def __init__(self):
         super().__init__()
         self.executable_fields = ["put", "check"]
@@ -176,6 +200,10 @@ class ExecuteValidator(Validator):
 
 
 class ExploitsValidator(Validator):
+    """
+    Class for check exploits.yml config, and run rounds simulation with news and exploits
+    """
+
     def __init__(self):
         super().__init__()
         self.news_path = ""
@@ -236,6 +264,7 @@ def main():
         return 1
     logs.success(f'[*] All checkers run successfully!')
 
+    # if mode is not "defence" exploits is not necessary
     if exec_validation.mode == "defence":
         exploit_validation = ExploitsValidator()
         exploit_validation()
