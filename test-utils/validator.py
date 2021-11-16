@@ -251,9 +251,11 @@ class ExploitsValidator(Validator):
 def main():
     # syntax validation
     logs.info("Config checking...")
+    # TODO: write starts message before ALL validators
     fields_validation = FieldsValidator()
     fields_validation()
     if fields_validation.check_failed:
+        # TODO: write message about fail for ALL validators error
         return 1
     logs.success(f'[*] Fields in config.yml checked successfully!')
 
