@@ -234,13 +234,14 @@ def main():
     exec_validation()
     if exec_validation.exec_failed:
         return 1
-    logs.success(f'[*] All scripts run successfully!')
+    logs.success(f'[*] All checkers run successfully!')
 
-    exploit_validation = ExploitsValidator()
-    exploit_validation()
-    if exploit_validation.exploits_failed:
-        return 1
-    logs.success(f'[*] All exploits run successfully!')
+    if exec_validation.mode == "defence":
+        exploit_validation = ExploitsValidator()
+        exploit_validation()
+        if exploit_validation.exploits_failed:
+            return 1
+        logs.success(f'[*] All exploits run successfully!')
     # TODO: print services info (cost, hp etc)
 
 
