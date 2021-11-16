@@ -97,6 +97,7 @@ class Validator:
 
 class FieldsValidator(Validator):
     """
+    # TODO: merge with ExecValidator
     Class for validate checker.yml correct syntax
     """
 
