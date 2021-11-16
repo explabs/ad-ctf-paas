@@ -1,25 +1,10 @@
-# валидация ключей, путь к файлам, запуск скриптов + ответ
-# два режима: проверить последовательность выполнения
-#
-# проверка чекера
-# 1. проверка существования файла
-# 2. проверка исполняемости файла
-# 3. запуск с ключами (генерация и хранение ключей)
-# 4. форматированный вывод (с цветом)
-
-# Генерация ключей
-# 1. генерация рандомный флага с префиксом test_
-# 2. получение id от вывода скрипта put.py
-# 3. запись к себе id:test_flag с префиксом test_
-# 4. получение flag от вывода скрипта get.py
-# 5. верефикация в словаре с префиксом test_
 import subprocess
 import os
 import yaml
 import uuid
 
 
-class bcolors:
+class Colors:
     HEADER = '\033[95m'
     OKBLUE = '\033[94m'
     OKCYAN = '\033[96m'
@@ -32,23 +17,30 @@ class bcolors:
 
 
 class Logs:
+    def __init__(self):
+        self.debug_msg = False
+
     def success(self, *msg, **kwargs):
-        print(*self.colored_msg(bcolors.OKGREEN, *msg), **kwargs)
+        print(*self.colored_msg(Colors.OKGREEN, *msg), **kwargs)
 
     def info(self, *msg, **kwargs):
-        print(*self.colored_msg(bcolors.OKBLUE, *msg), **kwargs)
+        print(*self.colored_msg(Colors.BOLD, *msg), **kwargs)
 
     def warning(self, *msg, **kwargs):
-        print(*self.colored_msg(bcolors.WARNING, *msg), **kwargs)
+        print(*self.colored_msg(Colors.WARNING, *msg), **kwargs)
 
     def error(self, *msg, **kwargs):
-        print(*self.colored_msg(bcolors.FAIL, *msg), **kwargs)
+        print(*self.colored_msg(Colors.FAIL, *msg), **kwargs)
+
+    def debug(self, *msg, **kwargs):
+        if self.debug_msg:
+            print(*msg, **kwargs)
 
     @staticmethod
     def colored_msg(color, *msg):
         colored = list()
         for text in msg:
-            colored.append(color + text + bcolors.ENDC)
+            colored.append(color + text + Colors.ENDC)
         return colored
 
 
@@ -64,102 +56,198 @@ class FlagsStorage:
         return "test_" + uuid.uuid4().hex.upper()
 
 
-print_errors = False
-logs = Logs()
-flags_storage = FlagsStorage()
+class Validator:
+    def __init__(self):
+        # TODO: check .env exists
+        self.api_folder = "admin-node/ad-ctf-paas-api/"
+        self.api_config_name = self.api_folder + "config.yml"
+        self.api_config = self.load_config(self.api_config_name)
+        # TODO: validate config.yml fields
+        self.service_names = list()
+        self.mode = self.api_config["mode"]
+        self.checker_config_name = self.api_folder + "checker.yml"
+        self.checker_config = self.load_config(self.checker_config_name)
 
-file_name = "admin-node/ad-ctf-paas-api/checker.yml"
-scripts_dir = "admin-node/ad-ctf-paas-api/scripts/"
-service_keys = [
-    ["name", "cost", "hp", "put", "check"],
-    ["name"]
-]
-executable_fields = ["put", "check"]
+        if self.mode == "defence":
+            self.exploit_config_name = self.api_folder + "exploits.yml"
+            self.exploit_config = self.load_config(self.exploit_config_name)
 
-check_name_flag = False
+        self.scripts_dir = "admin-node/ad-ctf-paas-api/scripts/"
 
-
-def check_names(data: dict, names: list):
-    global check_name_flag
-    for field, data in data.items():
-        for service in data:
-            for key, values in service.items():
-                if key not in names[0]:
-                    check_name_flag = True
-                    logs.error(f'Unsupported key "{key}" for field "{field}"')
-                if isinstance(values, list):
-                    check_names({key: values}, names[1])
+    @staticmethod
+    def load_config(config_name):
+        with open(config_name) as f:
+            return yaml.safe_load(f)
 
 
-def check_executable(data: dict):
-    for service in data["services"]:
-        for field in executable_fields:
-            script_path = service.get(field)
-            if script_path is not None:
-                for i, file in enumerate(script_path, 1):
-                    filename = file.get("name")
-                    if filename is not None:
-                        path = scripts_dir + filename
-                        if not os.path.isfile(path):
-                            logs.error(f"file {path} doesn't exists")
-                            continue
+class FieldsValidator(Validator):
+    def __init__(self):
+        super().__init__()
+        self.check_failed = False
+        self.service_keys = [
+            ["name", "cost", "hp", "put", "check"],
+            ["name"]
+        ]
 
-                        if not os.access(path, os.X_OK):
-                            logs.warning(f"file {path} is not executable")
-                            os.chmod(path, 0o775)
-                            logs.info(f"chmod +x {path}")
+    def check_names(self, data: dict, names: list):
+        for field, data in data.items():
+            for service in data:
+                for key, values in service.items():
+                    if key not in names[0]:
+                        self.check_failed = True
+                        logs.error(f'Unsupported key "{key}" for field "{field}"')
+                    if isinstance(values, list):
+                        self.check_names({key: values}, names[1])
 
-                        if field == "put":
-                            flag = flags_storage.generate_flag()
-                            result, err = check_exec(path, flag)
-                            if err:
-                                logs.error(f"{service.get('name')}-put-{i} cannot put flag")
-                                result = None
-                                if print_errors:
-                                    print(err)
-                            flags_storage.add_id_flag_pair(result, flag)
-
-                        elif field == "check":
-                            _id, flag = flags_storage.flags[-1]
-                            if not _id:
-                                logs.warning(f"{service.get('name')}-check-{i} skipped: put function is not working")
-                                continue
-
-                            result, err = check_exec(path, _id)
-                            if err:
-                                logs.error(f"{service.get('name')}-check-{i} script return error")
-                                if print_errors:
-                                    print(err)
-                                continue
-
-                            if result != flag:
-                                logs.error(f"{service.get('name')}-check-{i} flags do not match")
-                                if print_errors:
-                                    logs.error(f"\t{result} != {flag}")
-                                continue
-
-                            logs.success(f"{service.get('name')}-{i} passed")
+    def __call__(self):
+        self.check_names(self.checker_config, self.service_keys)
 
 
 def check_exec(script_path, argument):
     p = subprocess.Popen(f'{script_path} localhost {argument}', shell=True, stdout=subprocess.PIPE,
                          stderr=subprocess.PIPE)
     stdout, stderr = p.communicate()
-    if stderr == b'':
+    stderr = stderr.decode()
+    if stderr == "":
         stderr = None
     return stdout.decode().strip(), stderr
 
 
-with open(file_name) as f:
-    config = yaml.safe_load(f)
+class ExecuteValidator(Validator):
+    def __init__(self):
+        super().__init__()
+        self.executable_fields = ["put", "check"]
+        self.exec_failed = False
+        self.flags_storage = FlagsStorage()
 
-check_names(config, service_keys)
-if check_name_flag:
-    exit(1)
+    def check_executable(self):
+        for service in self.checker_config["services"]:
+            for field in self.executable_fields:
+                script_path = service.get(field)
+                if script_path is not None:
+                    for i, file in enumerate(script_path, 1):
+                        filename = file.get("name")
+                        if filename is not None:
+                            path = self.scripts_dir + filename
+                            if not os.path.isfile(path):
+                                logs.error(f"file {path} doesn't exists")
+                                self.exec_failed = True
+                                continue
 
-logs.success(f'[*] Fields in {file_name} checked successfully!')
-check_executable(config)
+                            if not os.access(path, os.X_OK):
+                                logs.warning(f"file {path} is not executable")
+                                os.chmod(path, 0o775)
+                                logs.info(f"chmod +x {path}")
 
-# os.path.isfile()
-# subprocess.run([])
-# flags = [(1, 2), (3,4)] [*]
+                            if field == "put":
+                                flag = self.flags_storage.generate_flag()
+                                result, err = check_exec(path, flag)
+                                if err:
+                                    logs.error(f"{service.get('name')}-put-{i} cannot put flag")
+                                    logs.debug(err)
+                                    result = None
+                                self.flags_storage.add_id_flag_pair(result, flag)
+
+                            elif field == "check":
+                                _id, flag = self.flags_storage.flags[-1]
+                                if not _id:
+                                    logs.warning(
+                                        f"{service.get('name')}-check-{i} skipped: put function is not working")
+                                    self.exec_failed = True
+                                    continue
+
+                                result, err = check_exec(path, _id)
+                                if err:
+                                    logs.error(f"{service.get('name')}-check-{i} script return error")
+                                    logs.debug(err)
+                                    self.exec_failed = True
+                                    continue
+
+                                if result != flag:
+                                    logs.error(f"{service.get('name')}-check-{i} flags do not match")
+                                    logs.error(f"\t{result} != {flag}")
+                                    self.exec_failed = True
+                                    continue
+
+                                logs.info(f"{service.get('name')}-{i} passed")
+
+    def __call__(self):
+        self.check_executable()
+
+
+class ExploitsValidator(Validator):
+    def __init__(self):
+        super().__init__()
+        self.news_path = ""
+        self.exploits_failed = False
+
+    def validate_syntax(self):
+        # TODO: validate exploits.yml syntax (maybe)
+        pass
+
+    def run_exploits(self):
+        for round_number, round_data in enumerate(self.exploit_config['rounds'], 1):
+            logs.info(f"Round: {round_number}")
+            for field, value in round_data.items():
+                if field == "news":
+                    self.print_news(value)
+                elif field == "hint_news":
+                    self.print_news(value)
+                elif field == "exploits":
+                    for exploit in value:
+                        result, err = check_exec(self.scripts_dir + exploit["script_name"], "0")
+                        if err:
+                            self.exploits_failed = True
+                            logs.error("  script error")
+                            logs.debug(err)
+                        elif result == '0':
+                            logs.warning("  Exploitation failed: script returns 0")
+                        elif result == '1':
+                            logs.info("  Exploitation success")
+
+    def print_news(self, news_name):
+        path = self.news_path + news_name
+        if os.path.exists(path):
+            with open(news_name) as n:
+                # TODO: (need to test) add cli Markdown output
+                print("  ", news_name)
+                print("  ", n.read())
+        else:
+            self.exploits_failed = True
+            logs.error(f"file {path} does not exists")
+
+    def __call__(self):
+        self.run_exploits()
+
+
+def main():
+    # syntax validation
+    logs.info("Config checking...")
+    fields_validation = FieldsValidator()
+    fields_validation()
+    if fields_validation.check_failed:
+        return 1
+    logs.success(f'[*] Fields in config.yml checked successfully!')
+
+    # checkers validation
+    exec_validation = ExecuteValidator()
+    exec_validation()
+    if exec_validation.exec_failed:
+        return 1
+    logs.success(f'[*] All scripts run successfully!')
+
+    exploit_validation = ExploitsValidator()
+    exploit_validation()
+    if exploit_validation.exploits_failed:
+        return 1
+    logs.success(f'[*] All exploits run successfully!')
+    # TODO: print services info (cost, hp etc)
+
+
+if __name__ == '__main__':
+    # TODO: add argparse (debug mode, news print mode, default api and scripts path)
+    # TODO: write readme for validator and move script to admin-node or api
+    # TODO: (maybe) run tasks with docker-compose
+    logs = Logs()
+    logs.debug_msg = False
+    exit(main())
