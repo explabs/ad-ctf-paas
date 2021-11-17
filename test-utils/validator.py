@@ -2,6 +2,7 @@ import subprocess
 import os
 import yaml
 import uuid
+import argparse
 
 
 class Colors:
@@ -26,12 +27,16 @@ class Logs:
 
     def __init__(self):
         self.debug_msg = False
+        self.cute_msg = False
 
     def success(self, *msg, **kwargs):
         print(*self.colored_msg(Colors.OKGREEN, *msg), **kwargs)
 
     def info(self, *msg, **kwargs):
-        print(*self.colored_msg(Colors.BOLD, *msg), **kwargs)
+        if self.cute_msg:
+            print(*self.colored_msg(Colors.HEADER, *msg), **kwargs)
+        else:
+            print(*self.colored_msg(Colors.BOLD, *msg), **kwargs)
 
     def warning(self, *msg, **kwargs):
         print(*self.colored_msg(Colors.WARNING, *msg), **kwargs)
@@ -74,8 +79,12 @@ class Validator:
 
     def __init__(self):
         # TODO: check .env exists
-        self.api_folder = "admin-node/ad-ctf-paas-api/"
+        self.env_folder = "admin-node/"
+        self.env_file_name = ".env"
+
+        self.api_folder = args.api
         self.api_config_name = self.api_folder + "config.yml"
+
         self.api_config = self.load_config(self.api_config_name)
         # TODO: validate config.yml fields
         self.service_names = list()
@@ -83,11 +92,11 @@ class Validator:
         self.checker_config_name = self.api_folder + "checker.yml"
         self.checker_config = self.load_config(self.checker_config_name)
 
-        if self.mode == "defence":
+        if self.mode == args.mode:
             self.exploit_config_name = self.api_folder + "exploits.yml"
             self.exploit_config = self.load_config(self.exploit_config_name)
 
-        self.scripts_dir = "admin-node/ad-ctf-paas-api/scripts/"
+        self.scripts_dir = args.script
 
     @staticmethod
     def load_config(config_name):
@@ -104,10 +113,13 @@ class FieldsValidator(Validator):
     def __init__(self):
         super().__init__()
         self.check_failed = False
+        self.env_failed = False
         self.service_keys = [
             ["name", "cost", "hp", "put", "check"],
             ["name"]
         ]
+        self.env_field = {"ADMIN_PASS", "SERVER_IP"}
+
 
     # TODO: after removing of "name" from exploits keys deprecate recursion
     def check_names(self, data: dict, names: list):
@@ -120,9 +132,22 @@ class FieldsValidator(Validator):
                     if isinstance(values, list):
                         self.check_names({key: values}, names[1])
 
+    def check_env(self):
+        env_path = self.env_folder + self.env_file_name
+        if not os.path.isfile(env_path):
+            logs.error(f"file {env_path} doesn't exists")
+            self.env_failed = True
+        else:
+            with open(env_path, 'r') as env:
+                env_content = dict(
+                    tuple(line.strip("\n").split('=')) for line in env.readlines()
+            )
+                if self.env_field !=set(env_content.keys()):
+                    print("error")
+
     def __call__(self):
         self.check_names(self.checker_config, self.service_keys)
-
+        self.check_env()
 
 def check_exec(script_path, argument):
     p = subprocess.Popen(f'{script_path} localhost {argument}', shell=True, stdout=subprocess.PIPE,
@@ -237,10 +262,11 @@ class ExploitsValidator(Validator):
     def print_news(self, news_name):
         path = self.news_path + news_name
         if os.path.exists(path):
-            with open(news_name) as n:
-                # TODO: (need to test) add cli Markdown output
-                print("  ", news_name)
-                print("  ", n.read())
+            print("  ", news_name)
+            if args.news:
+                with open(news_name) as n:
+                    # TODO: (need to test) add cli Markdown output
+                    print("  ", n.read())
         else:
             self.exploits_failed = True
             logs.error(f"file {path} does not exists")
@@ -268,19 +294,35 @@ def main():
     logs.success(f'[*] All checkers run successfully!')
 
     # if mode is not "defence" exploits is not necessary
-    if exec_validation.mode == "defence":
+    if exec_validation.mode == args.mode:
         exploit_validation = ExploitsValidator()
         exploit_validation()
         if exploit_validation.exploits_failed:
             return 1
         logs.success(f'[*] All exploits run successfully!')
-    # TODO: print services info (cost, hp etc)
+        # TODO: print services info (cost, hp etc)
 
 
 if __name__ == '__main__':
-    # TODO: add argparse (debug mode, news print mode, default api and scripts path)
+    parser = argparse.ArgumentParser(description="Program for validation syntax and file existence")
+    parser.add_argument('--dev', default=False, action='store_true',
+                        help='dev mode for local tests (default: %(default)s)')
+    parser.add_argument('--debug', default=False, action='store_true',
+                        help='debug mod for errors showing (default: %(default)s)')
+    parser.add_argument('--news', default=False, action='store_true',
+                        help='print news from news file (default: %(default)s)')
+    parser.add_argument('--api', default='admin-node/ad-ctf-paas-api/', type=str,
+                        help='set api dir path if needed (default: %(default)s)')
+    parser.add_argument('--script', default='admin-node/ad-ctf-paas-api/scripts/', type=str,
+                        help='set script dir path if needed (default: %(default)s)')
+    parser.add_argument('--mode', default='defence', choices=['defence', 'attack-defence', 'attack'], metavar='mode',
+                        help='defines the game mode (default: %(default)s)', type=str)
+    parser.add_argument('--girl', default=False, action='store_true',
+                        help='makes info text a little bit cuter (default: %(default)s)')
+    args = parser.parse_args()
     # TODO: write readme for validator and move script to admin-node or api
     # TODO: (maybe) run tasks with docker-compose
     logs = Logs()
-    logs.debug_msg = False
+    logs.debug_msg = args.debug
+    logs.cute_msg = args.girl
     exit(main())
