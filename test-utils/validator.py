@@ -100,6 +100,9 @@ class Validator:
 
     @staticmethod
     def load_config(config_name):
+        if not os.path.exists(config_name):
+            logs.error(f"file {config_name} does not exists")
+            exit(1)
         with open(config_name) as f:
             return yaml.safe_load(f)
 
@@ -120,9 +123,8 @@ class FieldsValidator(Validator):
         ]
         self.env_field = {"ADMIN_PASS", "SERVER_IP"}
 
-
     # TODO: after removing of "name" from exploits keys deprecate recursion
-    def check_names(self, data: dict, names: list):
+    def check_checker_file(self, data: dict, names: list):
         for field, data in data.items():
             for service in data:
                 for key, values in service.items():
@@ -130,7 +132,7 @@ class FieldsValidator(Validator):
                         self.check_failed = True
                         logs.error(f'Unsupported key "{key}" for field "{field}"')
                     if isinstance(values, list):
-                        self.check_names({key: values}, names[1])
+                        self.check_checker_file({key: values}, names[1])
 
     def check_env(self):
         env_path = self.env_folder + self.env_file_name
@@ -141,13 +143,14 @@ class FieldsValidator(Validator):
             with open(env_path, 'r') as env:
                 env_content = dict(
                     tuple(line.strip("\n").split('=')) for line in env.readlines()
-            )
-                if self.env_field !=set(env_content.keys()):
+                )
+                if self.env_field != set(env_content.keys()):
                     print("error")
 
     def __call__(self):
-        self.check_names(self.checker_config, self.service_keys)
+        self.check_checker_file(self.checker_config, self.service_keys)
         self.check_env()
+
 
 def check_exec(script_path, argument):
     p = subprocess.Popen(f'{script_path} localhost {argument}', shell=True, stdout=subprocess.PIPE,
@@ -320,6 +323,14 @@ if __name__ == '__main__':
     parser.add_argument('--girl', default=False, action='store_true',
                         help='makes info text a little bit cuter (default: %(default)s)')
     args = parser.parse_args()
+    script_path = parser.get_default("script")
+    api_path = parser.get_default("api")
+    # if dev mode chosen change script path to current dir
+    if args.dev:
+        if args.script == script_path:
+            args.script = "./"
+        if args.api == api_path:
+            args.api = "./"
     # TODO: write readme for validator and move script to admin-node or api
     # TODO: (maybe) run tasks with docker-compose
     logs = Logs()
