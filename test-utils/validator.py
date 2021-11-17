@@ -308,11 +308,11 @@ def main():
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Program for validation syntax and file existence")
-    parser.add_argument('--dev', default=False, action='store_true',
+    parser.add_argument('-d', '--dev', default=False, action='store_true',
                         help='dev mode for local tests (default: %(default)s)')
-    parser.add_argument('--debug', default=False, action='store_true',
+    parser.add_argument('-D', '--debug', default=False, action='store_true',
                         help='debug mod for errors showing (default: %(default)s)')
-    parser.add_argument('--news', default=False, action='store_true',
+    parser.add_argument('-n', '--news', default=False, action='store_true',
                         help='print news from news file (default: %(default)s)')
     parser.add_argument('--api', default='admin-node/ad-ctf-paas-api/', type=str,
                         help='set api dir path if needed (default: %(default)s)')
