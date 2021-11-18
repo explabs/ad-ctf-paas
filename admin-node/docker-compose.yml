@@ -21,6 +21,9 @@ services:
       - mongo
       - redis
       - prometheus-manager
+      - ovpn-admin
+      - openvpn
+      - fileserver
 
   mongo:
     image: mongo:5.0
@@ -60,7 +63,7 @@ services:
       - "9200:9200"
       - "9600:9600"
     networks:
-      - test-net
+      - ad-paas-net
   node2:
     image: amazon/opendistro-for-elasticsearch:1.13.2
     container_name: node2
@@ -81,7 +84,7 @@ services:
     volumes:
       - test-data2:/usr/share/elasticsearch/data
     networks:
-      - test-net
+      - ad-paas-net
   kibana:
     image: amazon/opendistro-for-elasticsearch-kibana:1.13.2
     container_name: kibana
@@ -93,7 +96,7 @@ services:
       ELASTICSEARCH_URL: https://node1:9200
       ELASTICSEARCH_HOSTS: https://node1:9200
     networks:
-      - test-net
+      - ad-paas-net
   logstash:
     container_name: logstash
     image: docker.elastic.co/logstash/logstash-oss:7.10.2
@@ -106,7 +109,7 @@ services:
     depends_on:
       - node1
     networks:
-      - test-net
+      - ad-paas-net
 
   prometheus-manager:
     container_name: prometheus-manager
@@ -136,7 +139,7 @@ services:
     ports:
       - "3000:3000"
     networks:
-      - test-net
+      - ad-paas-net
 
   openvpn:
     container_name: openvpn
@@ -184,4 +187,4 @@ volumes:
   test-data2:
 
 networks:
-  test-net:
+  ad-paas-net:
