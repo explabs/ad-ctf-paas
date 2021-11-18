@@ -33,10 +33,10 @@ class Logs:
         print(*self.colored_msg(Colors.OKGREEN, *msg), **kwargs)
 
     def info(self, *msg, **kwargs):
+        color = Colors.BOLD
         if self.cute_msg:
-            print(*self.colored_msg(Colors.HEADER, *msg), **kwargs)
-        else:
-            print(*self.colored_msg(Colors.BOLD, *msg), **kwargs)
+            color = Colors.HEADER
+        print(*self.colored_msg(color, *msg), **kwargs)
 
     def warning(self, *msg, **kwargs):
         print(*self.colored_msg(Colors.WARNING, *msg), **kwargs)
