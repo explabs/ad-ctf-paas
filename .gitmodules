@@ -10,3 +10,6 @@
 [submodule "admin-node/ovpn-admin"]
 	path = admin-node/ovpn-admin
 	url = git@github.com:explabs/ovpn-admin.git
+[submodule "admin-node/ad-ctf-paas-web"]
+	path = admin-node/ad-ctf-paas-web
+	url = git@github.com:explabs/ad-ctf-paas-web.git
