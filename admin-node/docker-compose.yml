@@ -1,6 +1,18 @@
 version: '3.7'
 services:
-  ad-api:
+  web:
+    build:
+      context: ad-ctf-paas-web
+      network: host
+      args:
+        - API_URL=http://${SERVER_API}
+    container_name: web
+    ports:
+      - "3000:3000"
+#    depends_on:
+#      - api
+
+  api:
     build:
       context: ad-ctf-paas-api
       network: host
@@ -120,7 +132,7 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
       #- ./monitoring:/app/monitoring
       - ./monitoring/prometheus/:/etc/prometheus/
-#      - ./monitoring/data/prometheus:/data
+    #      - ./monitoring/data/prometheus:/data
     environment:
       DATA: monitoring/prometheus/data
       CONFIG: monitoring/prometheus/prometheus.yml
@@ -172,7 +184,7 @@ services:
 
   fileserver:
     container_name: fileserver
-    build: 
+    build:
       context: fileserver
       network: host
     volumes:
@@ -180,7 +192,7 @@ services:
     ports:
       - "8081:8081"
     restart: unless-stopped
-      
+
 
 volumes:
   test-data1:
