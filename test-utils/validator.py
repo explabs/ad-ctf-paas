@@ -72,13 +72,12 @@ class FlagsStorage:
         return "test_" + uuid.uuid4().hex.upper()
 
 
-class Validator:
+class Configs:
     """
-    Base Validator class for loads platform configs
+    Base Path class for loads platform configs
     """
 
     def __init__(self):
-        # TODO: check .env exists
         self.env_folder = "admin-node/"
         self.env_file_name = ".env"
 
@@ -107,12 +106,7 @@ class Validator:
             return yaml.safe_load(f)
 
 
-class FieldsValidator(Validator):
-    """
-    # TODO: merge with ExecValidator
-    Class for validate checker.yml correct syntax
-    """
-
+class Validator(Configs):
     def __init__(self):
         super().__init__()
         self.check_failed = False
@@ -123,7 +117,17 @@ class FieldsValidator(Validator):
         ]
         self.env_field = {"ADMIN_PASS", "SERVER_IP"}
 
-    # TODO: after removing of "name" from exploits keys deprecate recursion
+        self.executable_fields = ["put", "check"]
+        self.exec_failed = False
+        self.flags_storage = FlagsStorage()
+
+        self.news_path = ""
+        self.exploits_failed = False
+        self.exploits_fields = [
+            ['news', 'hint_news', 'exploits'],
+            ['service_name', 'script_name']
+        ]
+
     def check_checker_file(self, data: dict, names: list):
         for field, data in data.items():
             for service in data:
@@ -147,31 +151,25 @@ class FieldsValidator(Validator):
                 if self.env_field != set(env_content.keys()):
                     print("error")
 
-    def __call__(self):
-        self.check_checker_file(self.checker_config, self.service_keys)
-        self.check_env()
-
-
-def check_exec(script_path, argument):
-    p = subprocess.Popen(f'{script_path} localhost {argument}', shell=True, stdout=subprocess.PIPE,
-                         stderr=subprocess.PIPE)
-    stdout, stderr = p.communicate()
-    stderr = stderr.decode()
-    if stderr == "":
-        stderr = None
-    return stdout.decode().strip(), stderr
-
-
-class ExecuteValidator(Validator):
-    """
-    Class for validate checkers scripts work
-    """
-
-    def __init__(self):
-        super().__init__()
-        self.executable_fields = ["put", "check"]
-        self.exec_failed = False
-        self.flags_storage = FlagsStorage()
+    def check_exploits(self, data: dict, names: list):
+        for data, fields in data.items():
+            for field in fields:
+                for job, name in field.items():
+                    if job not in names[0]:
+                        self.exploits_failed = True
+                        logs.error(f'Unsupported key "{job}" in {field}')
+                    if name is None:
+                        self.exploits_failed = True
+                        logs.warning(f'Blank space in "{field}"')
+                    if job is "exploits":
+                        for j in name:
+                            for key, value in j.items():
+                                if key not in names[1]:
+                                    self.exploits_failed = True
+                                    logs.error(f'Unsupported key "{key}" in {j}')
+                                if value is None:
+                                    self.exploits_failed = True
+                                    logs.warning(f'Blank space in {j}')
 
     def check_executable(self):
         for service in self.checker_config["services"]:
@@ -224,24 +222,6 @@ class ExecuteValidator(Validator):
 
                                 logs.info(f"{service.get('name')}-{i} passed")
 
-    def __call__(self):
-        self.check_executable()
-
-
-class ExploitsValidator(Validator):
-    """
-    Class for check exploits.yml config, and run rounds simulation with news and exploits
-    """
-
-    def __init__(self):
-        super().__init__()
-        self.news_path = ""
-        self.exploits_failed = False
-
-    def validate_syntax(self):
-        # TODO: validate exploits.yml syntax (maybe)
-        pass
-
     def run_exploits(self):
         for round_number, round_data in enumerate(self.exploit_config['rounds'], 1):
             logs.info(f"Round: {round_number}")
@@ -268,41 +248,52 @@ class ExploitsValidator(Validator):
             print("  ", news_name)
             if args.news:
                 with open(news_name) as n:
-                    # TODO: (need to test) add cli Markdown output
                     print("  ", n.read())
         else:
             self.exploits_failed = True
             logs.error(f"file {path} does not exists")
 
     def __call__(self):
+        self.check_checker_file(self.checker_config, self.service_keys)
+        self.check_env()
+        self.check_executable()
+        self.check_exploits(self.exploit_config, self.exploits_fields)
         self.run_exploits()
+
+
+def check_exec(script_path, argument):
+    p = subprocess.Popen(f'{script_path} localhost {argument}', shell=True, stdout=subprocess.PIPE,
+                         stderr=subprocess.PIPE)
+    stdout, stderr = p.communicate()
+    stderr = stderr.decode()
+    if stderr == "":
+        stderr = None
+    return stdout.decode().strip(), stderr
 
 
 def main():
     # syntax validation
     logs.info("Config checking...")
-    # TODO: write starts message before ALL validators
-    fields_validation = FieldsValidator()
-    fields_validation()
-    if fields_validation.check_failed:
-        # TODO: write message about fail for ALL validators error
+    validator = Validator()
+    validator()
+    if validator.check_failed:
+        logs.error("validation failed")
         return 1
     logs.success(f'[*] Fields in config.yml checked successfully!')
 
     # checkers validation
-    exec_validation = ExecuteValidator()
-    exec_validation()
-    if exec_validation.exec_failed:
+    if validator.exec_failed:
         return 1
     logs.success(f'[*] All checkers run successfully!')
 
     # if mode is not "defence" exploits is not necessary
-    if exec_validation.mode == args.mode:
-        exploit_validation = ExploitsValidator()
-        exploit_validation()
-        if exploit_validation.exploits_failed:
+    if validator.mode == args.mode:
+        if validator.exploits_failed:
             return 1
         logs.success(f'[*] All exploits run successfully!')
+    if validator.exploits_failed:
+        logs.error(f'Check syntax in exploits.yml')
+        return 1
         # TODO: print services info (cost, hp etc)
 
 
@@ -331,7 +322,6 @@ if __name__ == '__main__':
             args.script = "./"
         if args.api == api_path:
             args.api = "./"
-    # TODO: write readme for validator and move script to admin-node or api
     # TODO: (maybe) run tasks with docker-compose
     logs = Logs()
     logs.debug_msg = args.debug
