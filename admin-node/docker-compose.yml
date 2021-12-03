@@ -13,10 +13,8 @@ services:
 #      - api
 
   api:
-    build:
-      context: ad-ctf-paas-api
-      network: host
-    container_name: ad-api
+    image: explabs/ad-ctf-paas-api
+    container_name: api
     environment:
       - ADMIN_PASS=${ADMIN_PASS}
       - SERVER_IP=${SERVER_IP}
