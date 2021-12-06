@@ -13,3 +13,6 @@
 [submodule "admin-node/ad-ctf-paas-web"]
 	path = admin-node/ad-ctf-paas-web
 	url = git@github.com:explabs/ad-ctf-paas-web.git
+[submodule "admin-node/docs-web"]
+	path = admin-node/docs-web
+	url = git@github.com:explabs/docs-web.git
