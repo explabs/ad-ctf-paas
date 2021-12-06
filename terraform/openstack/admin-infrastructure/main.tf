@@ -42,11 +42,39 @@ resource "openstack_compute_instance_v2" "admin" {
     delete_on_termination = true
   }
 }
-resource "null_resource" "copy" {
+resource "null_resource" "tasks" {
   depends_on = [openstack_compute_instance_v2.admin]
   provisioner "file" {
-    source      = "../../../admin-node"
+    source      = "../../../admin-node/tasks"
     destination = "/home/org/"
+
+    connection {
+      type        = "ssh"
+      user        = "org"
+      private_key = file("${abspath(path.module)}/../../keys/org_key/org")
+      host        = openstack_networking_floatingip_v2.fip.address
+    }
+  }
+}
+resource "null_resource" "configs" {
+  depends_on = [openstack_compute_instance_v2.admin]
+  provisioner "file" {
+    source      = "../../../admin-node/configs"
+    destination = "/home/org/"
+
+    connection {
+      type        = "ssh"
+      user        = "org"
+      private_key = file("${abspath(path.module)}/../../keys/org_key/org")
+      host        = openstack_networking_floatingip_v2.fip.address
+    }
+  }
+}
+resource "null_resource" "compose" {
+  depends_on = [openstack_compute_instance_v2.admin]
+  provisioner "file" {
+    source      = "../../../admin-node/docker-compose.yml"
+    destination = "/home/org/docker-compose.yml"
 
     connection {
       type        = "ssh"
