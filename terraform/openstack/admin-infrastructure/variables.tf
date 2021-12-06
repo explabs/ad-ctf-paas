@@ -11,7 +11,7 @@ variable "user_name" {
   default = ""
 }
 variable "password" {
-  default = ""
+  default = "8x-JvQ@coEA778!pZsnB"
 }
 variable "tenant_id" {
   default = ""

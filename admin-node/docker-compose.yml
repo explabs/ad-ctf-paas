@@ -8,7 +8,7 @@ services:
         - API_URL=http://${SERVER_API}
     container_name: web
     ports:
-      - "3000:3000"
+      - "3333:3000"
 #    depends_on:
 #      - api
 
@@ -25,8 +25,8 @@ services:
     ports:
       - "80:8080"
     volumes:
-      - ./ad-ctf-paas-api/config.yml:/api/config.yml
-      - ./ad-ctf-paas-api/checker.yml:/api/checker.yml
+      - ./configs/config.yml:/api/config.yml
+      - ./configs/checker.yml:/api/checker.yml
     depends_on:
       - mongo
       - redis
