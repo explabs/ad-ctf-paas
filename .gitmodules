@@ -1,9 +1,6 @@
 [submodule "ad-ctf-paas-api"]
 	path = admin-node/ad-ctf-paas-api
 	url = git@github.com:explabs/ad-ctf-paas-api.git
-[submodule "prometheus-manager"]
-	path = admin-node/prometheus-manager
-	url = git@github.com:explabs/prometheus-manager.git
 [submodule "admin-node/fileserver"]
 	path = admin-node/fileserver
 	url = git@github.com:explabs/fileserver.git
@@ -13,7 +10,6 @@
 [submodule "admin-node/ad-ctf-paas-web"]
 	path = admin-node/ad-ctf-paas-web
 	url = git@github.com:explabs/ad-ctf-paas-web.git
-
 [submodule "admin-node/docs-web"]
 	path = admin-node/docs-web
 	url = git@github.com:explabs/docs-web.git
