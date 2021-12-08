@@ -10,7 +10,7 @@ services:
     ports:
       - "3333:3000"
 #    depends_on:
-#      - api
+##      - api
 
   api:
     image: explabs/ad-ctf-paas-api
@@ -30,7 +30,7 @@ services:
     depends_on:
       - mongo
       - redis
-      - prometheus-manager
+      - service-manager
       - ovpn-admin
       - openvpn
       - fileserver
@@ -121,19 +121,17 @@ services:
     networks:
       - ad-paas-net
 
-  prometheus-manager:
-    container_name: prometheus-manager
-    build:
-      context: prometheus-manager
-      network: host
+  service-manager:
+    container_name: service-manager
+    image: explabs/service-manager
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       #- ./monitoring:/app/monitoring
       - ./monitoring/prometheus/:/etc/prometheus/
     #      - ./monitoring/data/prometheus:/data
     environment:
-      DATA: monitoring/prometheus/data
-      CONFIG: monitoring/prometheus/prometheus.yml
+      DATA: data
+      CONFIG: prometheus.yml
       HOST_PWD: $PWD
       ADMIN_PASS: $ADMIN_PASS
     ports:
@@ -182,9 +180,7 @@ services:
 
   fileserver:
     container_name: fileserver
-    build:
-      context: fileserver
-      network: host
+    image: explabs/fileserver
     volumes:
       - ./tasks:/tasks
     ports:
