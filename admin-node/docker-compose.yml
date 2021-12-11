@@ -1,16 +1,16 @@
 version: '3.7'
 services:
-  web:
-    build:
-      context: ad-ctf-paas-web
-      network: host
-      args:
-        - API_URL=http://${SERVER_API}
-    container_name: web
-    ports:
-      - "3333:3000"
+#  web:
+#    build:
+#      context: ad-ctf-paas-web
+#      network: host
+#      args:
+#        - API_URL=http://${SERVER_API}
+#    container_name: web
+#    ports:
+#      - "3333:3000"
 #    depends_on:
-##      - api
+#      - api
 
   api:
     image: explabs/ad-ctf-paas-api
@@ -151,11 +151,7 @@ services:
 
   openvpn:
     container_name: openvpn
-    build:
-      context: ovpn-admin
-      dockerfile: Dockerfile.openvpn
-      network: host
-    image: openvpn:local
+    image: flant/ovpn-admin:openvpn-1.7.5
     command: /etc/openvpn/setup/configure.sh
     cap_add:
       - NET_ADMIN
@@ -163,15 +159,13 @@ services:
       - "7777:1194" # for openvpn
       - "9000:9000" # for ovpn-admin because of network_mode
     volumes:
+      - ./openvpn/setup/openvpn.conf:/etc/openvpn/setup/openvpn.conf
       - ./openvpn/easyrsa_master:/etc/openvpn/easyrsa
       - ./openvpn/ccd_master:/etc/openvpn/ccd
 
   ovpn-admin:
     container_name: ovpn-admin
-    build:
-      context: ovpn-admin
-      network: host
-    image: ovpn-admin:local
+    image: flant/ovpn-admin:1.7.5
     command: /app/ovpn-admin --listen.port="9000" --ovpn.server="${SERVER_IP}:7777:tcp" --easyrsa.path="/mnt/easyrsa" --easyrsa.index-path="/mnt/easyrsa/pki/index.txt" --ccd --ccd.path="/mnt/ccd" --auth.password --auth.db="/mnt/easyrsa/pki/users.db"
     network_mode: service:openvpn
     volumes:
