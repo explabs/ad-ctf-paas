@@ -23,16 +23,3 @@ resource "openstack_compute_instance_v2" "users" {
     access_network = true
   }
 }
-resource "openstack_networking_floatingip_v2" "fip" {
-  count = length(var.teams)
-  pool  = var.external_network_name
-}
-resource "openstack_compute_floatingip_associate_v2" "fip" {
-  count       = length(var.teams)
-  floating_ip = openstack_networking_floatingip_v2.fip.*.address[count.index]
-  instance_id = openstack_compute_instance_v2.users.*.id[count.index]
-}
-
-output "ip" {
-  value = openstack_networking_floatingip_v2.fip.*.address
-}
