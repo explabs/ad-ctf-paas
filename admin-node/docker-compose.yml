@@ -1,16 +1,16 @@
 version: '3.7'
 services:
-#  web:
-#    build:
-#      context: ad-ctf-paas-web
-#      network: host
-#      args:
-#        - API_URL=http://${SERVER_API}
-#    container_name: web
-#    ports:
-#      - "3333:3000"
-#    depends_on:
-#      - api
+  #  web:
+  #    build:
+  #      context: ad-ctf-paas-web
+  #      network: host
+  #      args:
+  #        - API_URL=http://${SERVER_API}
+  #    container_name: web
+  #    ports:
+  #      - "3333:3000"
+  #    depends_on:
+  #      - api
 
   api:
     image: explabs/ad-ctf-paas-api
@@ -27,6 +27,7 @@ services:
     volumes:
       - ./configs/config.yml:/api/config.yml
       - ./configs/checker.yml:/api/checker.yml
+      - ./scripts:/api/app/scripts
     depends_on:
       - mongo
       - redis
@@ -42,6 +43,8 @@ services:
     environment:
       MONGO_INITDB_ROOT_USERNAME: admin
       MONGO_INITDB_ROOT_PASSWORD: ${ADMIN_PASS}
+    volumes:
+      - mongo-data:/data/db
     ports:
       - "27017:27017"
 
@@ -50,6 +53,9 @@ services:
     command: redis-server --requirepass ${ADMIN_PASS}
     ports:
       - "6379:6379"
+    volumes:
+      - redis-data:/data/
+
   node1:
     image: amazon/opendistro-for-elasticsearch:1.13.2
     container_name: node1
@@ -74,6 +80,7 @@ services:
       - "9600:9600"
     networks:
       - ad-paas-net
+
   node2:
     image: amazon/opendistro-for-elasticsearch:1.13.2
     container_name: node2
@@ -95,6 +102,7 @@ services:
       - test-data2:/usr/share/elasticsearch/data
     networks:
       - ad-paas-net
+
   kibana:
     image: amazon/opendistro-for-elasticsearch-kibana:1.13.2
     container_name: kibana
@@ -107,6 +115,7 @@ services:
       ELASTICSEARCH_HOSTS: https://node1:9200
     networks:
       - ad-paas-net
+
   logstash:
     container_name: logstash
     image: docker.elastic.co/logstash/logstash-oss:7.10.2
@@ -181,8 +190,9 @@ services:
       - "8081:8081"
     restart: unless-stopped
 
-
 volumes:
+  mongo-data:
+  redis-data:
   test-data1:
   test-data2:
 
