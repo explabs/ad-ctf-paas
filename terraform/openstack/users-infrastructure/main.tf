@@ -17,9 +17,10 @@ resource "openstack_compute_instance_v2" "users" {
   flavor_name = var.flavour_name
 #  key_pair    = openstack_compute_keypair_v2.users-keypairs.*.name[count.index]
   user_data = data.template_cloudinit_config.users_cloudinit.*.rendered[count.index]
-
+  security_groups = ["${openstack_networking_secgroup_v2.secgroup.name}"]
   network {
     port           = openstack_networking_port_v2.ports.*.id[count.index]
     access_network = true
+
   }
 }
