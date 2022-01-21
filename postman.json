@@ -1,0 +1,525 @@
+{
+	"info": {
+		"_postman_id": "f3a6ad77-0b27-4625-8b4e-7468102dea1d",
+		"name": "AD infrastructure",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Admin",
+			"item": [
+				{
+					"name": "Admin Show teams",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "localhost:8080/api/v1/admin/teams",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"v1",
+								"admin",
+								"teams"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Generate Variables",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{api}}/api/v1/admin/generate/variables",
+							"host": [
+								"{{api}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"admin",
+								"generate",
+								"variables"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Generate SSH",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": null
+					},
+					"response": []
+				},
+				{
+					"name": "VPN",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{api}}/api/v1/admin/vpn",
+							"host": [
+								"{{api}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"admin",
+								"vpn"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Run Prometheus",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": null
+					},
+					"response": []
+				},
+				{
+					"name": "Stop Prometheus",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{api}}/api/v1/admin/prom/stop",
+							"host": [
+								"{{api}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"admin",
+								"prom",
+								"stop"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Close Registration",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": null
+					},
+					"response": []
+				},
+				{
+					"name": "Reopen Registration",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": null
+					},
+					"response": []
+				}
+			],
+			"auth": {
+				"type": "bearer",
+				"bearer": [
+					{
+						"key": "token",
+						"value": "{{access_token}}",
+						"type": "string"
+					}
+				]
+			},
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"const tokenUrl = 'http://' + pm.variables.get(\"api\") + '/api/v1/auth/login';",
+							"",
+							"",
+							"const username = 'admin';",
+							"const password = 'adminSecretPassRandom';",
+							"",
+							"",
+							"const getTokenRequest = {",
+							"",
+							"  method: 'POST',",
+							"",
+							"  url: tokenUrl,",
+							"",
+							"  body: {",
+							"      mode: 'formdata',",
+							"      formdata: [",
+							"          { key: 'username', value: username },",
+							"          { key: 'password', value: password }",
+							"      ]",
+							"  }",
+							"};",
+							"",
+							"",
+							"pm.sendRequest(getTokenRequest, (err, response) => {",
+							"  const jsonResponse = response.json();",
+							"  const newAccessToken = jsonResponse.token;",
+							"  pm.variables.set('access_token', newAccessToken);",
+							"",
+							"});"
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "Flags",
+			"item": [
+				{
+					"name": "Check Flag",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "password",
+									"value": "test",
+									"type": "string"
+								},
+								{
+									"key": "username",
+									"value": "checker",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "{{api}}/api/v1/game/checker",
+							"host": [
+								"{{api}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"game",
+								"checker"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Submit",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"flag\": \"flag\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "localhost:8080/api/v1/submit",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"v1",
+								"submit"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Exploits",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": null
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Example Task",
+			"item": [
+				{
+					"name": "Put User",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": null
+					},
+					"response": []
+				},
+				{
+					"name": "Check User Flag",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "localhost:3000/check/user",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"check",
+								"user"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Scoreboard",
+			"item": [
+				{
+					"name": "Board",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "localhost:8080/api/v1/scoreboard",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"v1",
+								"scoreboard"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Team",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": null
+					},
+					"response": []
+				},
+				{
+					"name": "Load VPN config",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{api}}/api/v1/team/vpn",
+							"host": [
+								"{{api}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"team",
+								"vpn"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"auth": {
+				"type": "bearer",
+				"bearer": [
+					{
+						"key": "token",
+						"value": "{{access_token}}",
+						"type": "string"
+					}
+				]
+			},
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"const tokenUrl = 'http://' + pm.variables.get(\"api\") + '/api/v1/auth/login';",
+							"",
+							"const username = 'naliway';",
+							"const password = 'explabs';",
+							"",
+							"",
+							"const getTokenRequest = {",
+							"",
+							"  method: 'POST',",
+							"",
+							"  url: tokenUrl,",
+							"",
+							"  body: {",
+							"      mode: 'formdata',",
+							"      formdata: [",
+							"          { key: 'username', value: username },",
+							"          { key: 'password', value: password }",
+							"      ]",
+							"  }",
+							"};",
+							"",
+							"",
+							"pm.sendRequest(getTokenRequest, (err, response) => {",
+							"  const jsonResponse = response.json();",
+							"  const newAccessToken = jsonResponse.token;",
+							"  pm.variables.set('access_token', newAccessToken);",
+							"",
+							"});"
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "Login",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"username\": \"admin\",\n    \"password\": \"admin\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{api}}/api/v1/auth/login",
+					"host": [
+						"{{api}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"auth",
+						"login"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Info",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{api}}/api/v1/services/system/info",
+					"host": [
+						"{{api}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"services",
+						"system",
+						"info"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Create Teams",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"name\":\"Fucking VPN7\",\n    \"password\": \"explabs\",\n    \"ssh_pub_key\": \"ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQD031UdpvqUS/LzznU8JBYqnKY023HT3bhpw9hvWv2FcsmFMa0oZJstc/AJRvt45BYOSMEoITiaZ5pSdKoJ1InSv2KEWOf2MF76Ui1lmvmneIXu7Dj7OJkyGlk5SQ1WG9Wc/98qmg0RUKpO/Dw6GpD4hEYBsU/yXmNOXKCNTTmK7gfka06R0YGGatPilKhsfjKy8sUMuUPeeiX6GqB8wwz51AUCV+cabmgFXzgcTEI8D/2taplgiBqnfInY7dKEAzl2a1zuxR1zo45UFPPw37bd+qkOlkAECJ9hKTdsvDNphWDcu77+ovARP1mG+fx5Vr8SM3GaUHs+SQhH7BUTeAXlQsZ55yP4WnIZ5DpPOxsYO8RAs3NScR6fj+TUe2wHuxCATPeI3XBKQcA377uWGTFTfXe9TQDy4L2QA/jtFXbs5UdnR8P00ijXcQahdBd8UhYSgNQcJZZgNdiohQb1pj3Hn9dG1La9JOLdzl71VjxtiGq8fGI0urlLQGUC6qzg5FM= ivanh@ivanh\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{api}}/api/v1/team/",
+					"host": [
+						"{{api}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"team",
+						""
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "api",
+			"value": "185.86.146.100"
+		}
+	]
+}
