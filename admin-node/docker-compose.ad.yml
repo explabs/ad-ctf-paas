@@ -11,6 +11,8 @@ services:
       - ./scripts:/scripts/
     networks:
       - ad-ctf-paas-net
+    depends_on:
+      - rabbit
   
   rabbit:
     image: rabbitmq:3-management-alpine
@@ -45,6 +47,7 @@ services:
       - ovpn-admin
       - openvpn
       - fileserver
+      - rabbit
 
   mongo:
     image: mongo:5.0
