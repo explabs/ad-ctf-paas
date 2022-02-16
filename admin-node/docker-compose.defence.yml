@@ -37,6 +37,8 @@ services:
     container_name: malwaretotal
     ports:
       - "80:8000"
+    volumes:
+      - ./malware.json:/app/malware.json
 
   api:
     image: explabs/ad-ctf-paas-api
