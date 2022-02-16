@@ -119,3 +119,6 @@ services:
 volumes:
   mongo-data:
   redis-data:
+
+networks:
+  ad-ctf-paas-net:
