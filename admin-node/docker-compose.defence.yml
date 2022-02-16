@@ -38,7 +38,7 @@ services:
     ports:
       - "8080:80"
     volumes:
-      - ./malwares/malwares.yml:/malwares.yml
+      - ./malwares/malwares.yml:/app/malwares.yml
 
   api:
     image: explabs/ad-ctf-paas-api
