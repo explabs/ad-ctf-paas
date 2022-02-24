@@ -5,14 +5,14 @@ app = Flask(__name__)
 flag = dict()
 
 
-@app.route("/user", methods=["POST"])
+@app.route("/user", methods=["GET", "POST"])
 def user():
     global flag
     if request.method == "POST":
         data = request.json
         flag["123"] = data["password"]
         return "123"
-
+    return "hello"
 
 @app.route("/user/<route>")
 def get_user(route):

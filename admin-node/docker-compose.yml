@@ -13,7 +13,7 @@ services:
   #      - api
 
   api:
-    image: explabs/ad-ctf-paas-api
+    image: explabs/ad-ctf-paas-api:latest
     container_name: api
     environment:
       - ADMIN_PASS=${ADMIN_PASS}
@@ -27,7 +27,7 @@ services:
     volumes:
       - ./configs/config.yml:/api/config.yml
       - ./configs/checker.yml:/api/checker.yml
-      - ./scripts:/api/app/scripts
+      - ./scripts:/api/scripts
     depends_on:
       - mongo
       - redis
