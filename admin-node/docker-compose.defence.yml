@@ -1,0 +1,124 @@
+version: '3.8'
+services:
+  checker:
+    image: explabs/ad-ctf-paas-checker
+    container_name: checker
+    restart: unless-stopped
+    environment:
+      - ADMIN_PASS=admin
+      - MONGODB=mongodb://mongo:27017
+    volumes:
+      - ./scripts:/scripts/
+    networks:
+      - ad-ctf-paas-net
+    depends_on:
+      - rabbit
+
+  rabbit:
+    image: rabbitmq:3-management-alpine
+    container_name: rabbitmq
+    environment:
+      - RABBITMQ_DEFAULT_USER=service
+      - RABBITMQ_DEFAULT_PASS=admin
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    networks:
+      - ad-ctf-paas-net
+
+  exploits:
+    # later
+
+  news:
+    # later
+
+  malwaretotal:
+    image: explabs/malwaretotal
+    container_name: malwaretotal
+    ports:
+      - "8080:80"
+    volumes:
+      - ./malwares/malwares.yml:/app/malwares.yml
+
+  api:
+    image: explabs/ad-ctf-paas-api
+    container_name: api
+    environment:
+      - ADMIN_PASS=${ADMIN_PASS}
+      - SERVER_IP=${SERVER_IP}
+      - OVPN_ADMIN=http://openvpn:9000
+      - MONGODB=mongodb://mongo:27017
+      - REDIS=redis:6379
+    ports:
+      - "80:8080"
+    volumes:
+      - ./configs/config.yml:/api/config.yml
+      - ./configs/checker.yml:/api/checker.yml
+      - ./scripts:/api/app/scripts
+    depends_on:
+      - mongo
+      - redis
+      - ovpn-admin
+      - openvpn
+      - fileserver
+      - rabbit
+
+  mongo:
+    image: mongo:5.0
+    container_name: mongo
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: ${ADMIN_PASS}
+    volumes:
+      - mongo-data:/data/db
+    ports:
+      - "27017:27017"
+
+  redis:
+    image: redis:6.2-alpine
+    container_name: redis
+    command: redis-server --requirepass ${ADMIN_PASS}
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data/
+
+  openvpn:
+    image: flant/ovpn-admin:openvpn-1.7.5
+    container_name: openvpn
+    command: /etc/openvpn/setup/configure.sh
+    cap_add:
+      - NET_ADMIN
+    ports:
+      - "7777:1194" # for openvpn
+      - "9000:9000" # for ovpn-admin because of network_mode
+    volumes:
+      - ./openvpn/setup/openvpn.conf:/etc/openvpn/setup/openvpn.conf
+      - ./openvpn/easyrsa_master:/etc/openvpn/easyrsa
+      - ./openvpn/ccd_master:/etc/openvpn/ccd
+
+  ovpn-admin:
+    image: flant/ovpn-admin:1.7.5
+    container_name: ovpn-admin
+    command: /app/ovpn-admin --listen.port="9000" --ovpn.server="${SERVER_IP}:7777:tcp" --easyrsa.path="/mnt/easyrsa" --easyrsa.index-path="/mnt/easyrsa/pki/index.txt" --ccd --ccd.path="/mnt/ccd" --auth.password --auth.db="/mnt/easyrsa/pki/users.db"
+    network_mode: service:openvpn
+    volumes:
+      - ./openvpn/easyrsa_master:/mnt/easyrsa
+      - ./openvpn/ccd_master:/mnt/ccd
+
+  fileserver:
+    image: explabs/fileserver
+    container_name: fileserver
+    volumes:
+      - ./tasks:/tasks
+    ports:
+      - "8081:8081"
+    restart: unless-stopped
+
+volumes:
+  mongo-data:
+  redis-data:
+
+networks:
+  ad-ctf-paas-net:
