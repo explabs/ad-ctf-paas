@@ -5,16 +5,14 @@ round_interval: 30s
 exploit_interval: 1m
 
 checker:
-  services:
-    - name: ExampleTask
-      cost: 3
-      hp: 1000
-      scripts:
-        - example_task.py
+  - name: ExampleTask
+    cost: 3
+    hp: 1000
+    script: example_task.py
 
 exploits:
   - name: ExampleTask
-    script: script.py
+    script: example_exploit.py
     rounds: 1-10,15-20,25-1000
 
 news:

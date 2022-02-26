@@ -17,7 +17,6 @@ services:
     container_name: api
     environment:
       - ADMIN_PASS=${ADMIN_PASS}
-      - SERVER_IP=${SERVER_IP}
       - PROMETHEUS=http://prometheus:9090
       - OVPN_ADMIN=http://openvpn:9000
       - MONGODB=mongodb://mongo:27017
@@ -26,7 +25,6 @@ services:
       - "80:8080"
     volumes:
       - ./configs/config.yml:/api/config.yml
-      - ./configs/checker.yml:/api/checker.yml
       - ./scripts:/api/scripts
     depends_on:
       - mongo
@@ -55,108 +53,6 @@ services:
       - "6379:6379"
     volumes:
       - redis-data:/data/
-
-  node1:
-    image: amazon/opendistro-for-elasticsearch:1.13.2
-    container_name: node1
-    environment:
-      - cluster.name=test-cluster
-      - node.name=node1
-      - discovery.seed_hosts=node1,node2
-      - cluster.initial_master_nodes=node1,node2
-      - bootstrap.memory_lock=true # along with the memlock settings below, disables swapping
-      - "ES_JAVA_OPTS=-Xms512m -Xmx512m" # minimum and maximum Java heap size, recommend setting both to 50% of system RAM
-    ulimits:
-      memlock:
-        soft: -1
-        hard: -1
-      nofile:
-        soft: 65536 # maximum number of open files for the Elasticsearch user, set to at least 65536 on modern systems
-        hard: 65536
-    volumes:
-      - test-data1:/usr/share/elasticsearch/data
-    ports:
-      - "9200:9200"
-      - "9600:9600"
-    networks:
-      - ad-paas-net
-
-  node2:
-    image: amazon/opendistro-for-elasticsearch:1.13.2
-    container_name: node2
-    environment:
-      - cluster.name=test-cluster
-      - node.name=node2
-      - discovery.seed_hosts=node1,node2
-      - cluster.initial_master_nodes=node1,node2
-      - bootstrap.memory_lock=true
-      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
-    ulimits:
-      memlock:
-        soft: -1
-        hard: -1
-      nofile:
-        soft: 65536
-        hard: 65536
-    volumes:
-      - test-data2:/usr/share/elasticsearch/data
-    networks:
-      - ad-paas-net
-
-  kibana:
-    image: amazon/opendistro-for-elasticsearch-kibana:1.13.2
-    container_name: kibana
-    ports:
-      - "5601:5601"
-    expose:
-      - "5601"
-    environment:
-      ELASTICSEARCH_URL: https://node1:9200
-      ELASTICSEARCH_HOSTS: https://node1:9200
-    networks:
-      - ad-paas-net
-
-  logstash:
-    container_name: logstash
-    image: docker.elastic.co/logstash/logstash-oss:7.10.2
-    volumes:
-      - ./monitoring/network/logstash.conf:/usr/share/logstash/pipeline/logstash.conf:ro
-    ports:
-      - "5044:5044"
-    environment:
-      LS_JAVA_OPTS: "-Xmx256m -Xms256m"
-    depends_on:
-      - node1
-    networks:
-      - ad-paas-net
-
-  service-manager:
-    container_name: service-manager
-    image: explabs/service-manager
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-      #- ./monitoring:/app/monitoring
-      - ./monitoring/prometheus/:/etc/prometheus/
-    #      - ./monitoring/data/prometheus:/data
-    environment:
-      DATA: data
-      CONFIG: prometheus.yml
-      HOST_PWD: $PWD
-      ADMIN_PASS: $ADMIN_PASS
-    ports:
-      - "9091:9091"
-    restart: unless-stopped
-
-  grafana:
-    container_name: grafana
-    image: grafana/grafana:latest
-    volumes:
-      - ./monitoring/grafana/grafana.ini:/etc/grafana/grafana.ini
-      - ./monitoring/grafana/datasource.yml:/etc/grafana/provisioning/datasources/datasource.yaml
-    ports:
-      - "3000:3000"
-    networks:
-      - ad-paas-net
 
   openvpn:
     container_name: openvpn
@@ -193,8 +89,6 @@ services:
 volumes:
   mongo-data:
   redis-data:
-  test-data1:
-  test-data2:
 
 networks:
   ad-paas-net:

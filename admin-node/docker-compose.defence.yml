@@ -6,11 +6,12 @@ services:
     restart: unless-stopped
     environment:
       - ADMIN_PASS=admin
-      - MONGODB=mongodb://mongo:27017
+      - MONGODB=mongo:27017
     volumes:
       - ./scripts:/scripts/
+      - ./configs/config.yml:/checker/config.yml
     networks:
-      - ad-ctf-paas-net
+      - service-net
     depends_on:
       - rabbit
 
@@ -19,18 +20,43 @@ services:
     container_name: rabbitmq
     environment:
       - RABBITMQ_DEFAULT_USER=service
-      - RABBITMQ_DEFAULT_PASS=admin
+      - RABBITMQ_DEFAULT_PASS=${ADMIN_PASS}
     ports:
       - "5672:5672"
       - "15672:15672"
     networks:
-      - ad-ctf-paas-net
+      - service-net
 
   exploits:
-    # later
+    image: explabs/ad-ctf-paas-exploits
+    container_name: exploits
+    restart: unless-stopped
+    environment:
+      - ADMIN_PASS=admin
+      - MONGODB=mongo:27017
+    depends_on:
+      - rabbit
+    volumes:
+      - ./exploits:/service/exploits/
+      - ./configs/config.yml:/service/config.yml
+    networks:
+      - service-net
 
   news:
-    # later
+    image: explabs/ad-ctf-paas-news
+    container_name: news
+    restart: unless-stopped
+    depends_on:
+      - rabbit
+    environment:
+      - ADMIN_PASS=admin
+      - TELEGRAM_TOKEN=$TELEGRAM_TOKEN
+      - TELEGRAM_CHAT_ID=$TELEGRAM_CHAT_ID
+    volumes:
+      - ./news:/service/news/
+      - ./configs/config.yml:/service/config.yml
+    networks:
+      - service-net
 
   malwaretotal:
     image: explabs/malwaretotal
@@ -47,14 +73,12 @@ services:
       - ADMIN_PASS=${ADMIN_PASS}
       - SERVER_IP=${SERVER_IP}
       - OVPN_ADMIN=http://openvpn:9000
-      - MONGODB=mongodb://mongo:27017
+      - MONGODB=mongo:27017
       - REDIS=redis:6379
     ports:
       - "80:8080"
     volumes:
       - ./configs/config.yml:/api/config.yml
-      - ./configs/checker.yml:/api/checker.yml
-      - ./scripts:/api/app/scripts
     depends_on:
       - mongo
       - redis
@@ -62,6 +86,9 @@ services:
       - openvpn
       - fileserver
       - rabbit
+    networks:
+      - service-net
+      - vpn-net
 
   mongo:
     image: mongo:5.0
@@ -74,6 +101,8 @@ services:
       - mongo-data:/data/db
     ports:
       - "27017:27017"
+    networks:
+      - service-net
 
   redis:
     image: redis:6.2-alpine
@@ -83,6 +112,8 @@ services:
       - "6379:6379"
     volumes:
       - redis-data:/data/
+    networks:
+      - service-net
 
   openvpn:
     image: flant/ovpn-admin:openvpn-1.7.5
@@ -97,6 +128,8 @@ services:
       - ./openvpn/setup/openvpn.conf:/etc/openvpn/setup/openvpn.conf
       - ./openvpn/easyrsa_master:/etc/openvpn/easyrsa
       - ./openvpn/ccd_master:/etc/openvpn/ccd
+    networks:
+      - vpn-net
 
   ovpn-admin:
     image: flant/ovpn-admin:1.7.5
@@ -121,4 +154,5 @@ volumes:
   redis-data:
 
 networks:
-  ad-ctf-paas-net:
+  vpn-net:
+  service-net:
