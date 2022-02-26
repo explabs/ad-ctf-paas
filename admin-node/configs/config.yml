@@ -3,3 +3,21 @@ network: 10.0.1.0/24
 checker_password: test
 round_interval: 30s
 exploit_interval: 1m
+
+checker:
+  services:
+    - name: ExampleTask
+      cost: 3
+      hp: 1000
+      scripts:
+        - example_task.py
+
+exploits:
+  - name: ExampleTask
+    script: script.py
+    rounds: 1-10,15-20,25-1000
+
+news:
+  - round: 25
+    text: "[⁠](http://risovach.ru/upload/2016/04/mem/pinok_111999269_orig_.jpg)"
+    #filename: test_news.md
