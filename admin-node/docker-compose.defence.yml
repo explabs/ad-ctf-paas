@@ -12,9 +12,7 @@ services:
       - "--entryPoints.openvpn.address=:1194"
 
     ports:
-      # The HTTP port
       - "80:80"
-      # The Web UI (enabled by --api.insecure=true)
       - "1194:1194"
     labels:
       - "traefik.enable=true"
@@ -24,7 +22,6 @@ services:
       - "traefik.http.middlewares.auth.basicauth.users=${HASH_ADMIN_PASS}"
 
     volumes:
-      # So that Traefik can listen to the Docker events
       - /var/run/docker.sock:/var/run/docker.sock
     networks:
       - vpn-net
@@ -108,8 +105,6 @@ services:
       - OVPN_ADMIN=http://openvpn:9000
       - MONGODB=mongo:27017
       - REDIS=redis:6379
-    #    ports:
-    #      - "80:8080"
     volumes:
       - ./configs/config.yml:/api/config.yml
     labels:
@@ -158,11 +153,6 @@ services:
     command: /etc/openvpn/setup/configure.sh
     cap_add:
       - NET_ADMIN
-    #    ports:
-    #      - "7777:1194" # for openvpn
-    #      - "9000:9000" # for ovpn-admin because of network_mode
-    #    expose:
-    #      - 9000
     volumes:
       - ./openvpn/setup/openvpn.conf:/etc/openvpn/setup/openvpn.conf
       - ./openvpn/easyrsa_master:/etc/openvpn/easyrsa
