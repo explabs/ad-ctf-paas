@@ -21,9 +21,13 @@ fi
 
 echo "admin password is '$ADMIN_PASS'"
 
-cat << EOF >> .env
-SERVER_IP=127.0.0.1
+cat << EOF > .env
+DOMAIN=$DOMAIN
+ADMIN_PASS=$ADMIN_PASS
+SERVER_IP=$SERVER_IP
 HASH_ADMIN_PASS=admin:$(openssl passwd -apr1 $ADMIN_PASS)
+TELEGRAM_TOKEN=$TELEGRAM_TOKEN
+TELEGRAM_CHAT_ID=$TELEGRAM_CHAT_ID
 EOF
 
 docker-compose -f docker-compose.defence.yml up -d

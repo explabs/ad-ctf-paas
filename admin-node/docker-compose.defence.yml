@@ -3,15 +3,19 @@ services:
   reverse-proxy:
     image: traefik:v2.6
     command:
+      - "--api.debug=true"
       - "--api.dashboard=true"
       - "--api"
       - "--providers.docker"
       - "--providers.docker.exposedByDefault=false"
+      - "--entryPoints.web.address=:80"
+      - "--entryPoints.openvpn.address=:1194"
+
     ports:
       # The HTTP port
       - "80:80"
       # The Web UI (enabled by --api.insecure=true)
-      - "8080:8080"
+      - "1194:1194"
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.dashboard.rule=Host(`traefik.${DOMAIN}`) && (PathPrefix(`/api`) || PathPrefix(`/dashboard`))"
@@ -22,6 +26,9 @@ services:
     volumes:
       # So that Traefik can listen to the Docker events
       - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - vpn-net
+      - proxy
 
   checker:
     image: explabs/ad-ctf-paas-checker
@@ -89,6 +96,8 @@ services:
       - "traefik.http.routers.malwaretotal.rule=Host(`malwaretotal.${DOMAIN}`)"
     volumes:
       - ./malwares/malwares.yml:/app/malwares.yml
+    networks:
+      - proxy
 
   api:
     image: explabs/ad-ctf-paas-api
@@ -116,6 +125,7 @@ services:
     networks:
       - service-net
       - vpn-net
+      - proxy
 
   mongo:
     image: mongo:5.0
@@ -148,20 +158,33 @@ services:
     command: /etc/openvpn/setup/configure.sh
     cap_add:
       - NET_ADMIN
-    ports:
-      - "7777:1194" # for openvpn
-      - "9000:9000" # for ovpn-admin because of network_mode
+    #    ports:
+    #      - "7777:1194" # for openvpn
+    #      - "9000:9000" # for ovpn-admin because of network_mode
+    #    expose:
+    #      - 9000
     volumes:
       - ./openvpn/setup/openvpn.conf:/etc/openvpn/setup/openvpn.conf
       - ./openvpn/easyrsa_master:/etc/openvpn/easyrsa
       - ./openvpn/ccd_master:/etc/openvpn/ccd
+    labels:
+      - "traefik.enable=true"
+      - "traefik.en"
+      - "traefik.http.routers.ovpn-admin.rule=Host(`vpn-admin.${DOMAIN}`)"
+      - "traefik.http.services.ovpn-admin.loadbalancer.server.port=9000"
+      - "traefik.http.services.ovpn-admin.loadbalancer.server.scheme=http"
+      - "traefik.http.routers.ovpn-admin.middlewares=auth"
+      - "traefik.tcp.routers.openvpn.rule=HostSNI(`*`)"
+      - "traefik.tcp.routers.openvpn.entrypoints=openvpn"
+      - "traefik.tcp.routers.openvpn.service=openvpn"
+      - "traefik.tcp.services.openvpn.loadbalancer.server.port=1194"
     networks:
       - vpn-net
 
   ovpn-admin:
     image: flant/ovpn-admin:1.7.5
     container_name: ovpn-admin
-    command: /app/ovpn-admin --listen.port="9000" --ovpn.server="${SERVER_IP}:7777:tcp" --easyrsa.path="/mnt/easyrsa" --easyrsa.index-path="/mnt/easyrsa/pki/index.txt" --ccd --ccd.path="/mnt/ccd" --auth.password --auth.db="/mnt/easyrsa/pki/users.db"
+    command: /app/ovpn-admin --listen.port="9000" --ovpn.server="openvpn.${DOMAIN}:1194:tcp" --easyrsa.path="/mnt/easyrsa" --easyrsa.index-path="/mnt/easyrsa/pki/index.txt" --ccd --ccd.path="/mnt/ccd" --auth.password --auth.db="/mnt/easyrsa/pki/users.db"
     network_mode: service:openvpn
     volumes:
       - ./openvpn/easyrsa_master:/mnt/easyrsa
@@ -176,6 +199,8 @@ services:
       - "traefik.enable=true"
       - "traefik.http.routers.fileserver.rule=Host(`fileserver.${DOMAIN}`)"
     restart: unless-stopped
+    networks:
+      - proxy
 
 volumes:
   mongo-data:
@@ -184,3 +209,4 @@ volumes:
 networks:
   vpn-net:
   service-net:
+  proxy:
