@@ -41,6 +41,13 @@ services:
       - service-net
     depends_on:
       - rabbit
+    extra_hosts:
+      - "naliway:172.17.0.1"
+    logging:
+      driver: gelf
+      options:
+        gelf-address: "udp://localhost:5044"
+        tag: "checker"
 
   rabbit:
     image: rabbitmq:3-management-alpine
@@ -48,11 +55,15 @@ services:
     environment:
       - RABBITMQ_DEFAULT_USER=service
       - RABBITMQ_DEFAULT_PASS=${ADMIN_PASS}
-    ports:
-      - "5672:5672"
-      - "15672:15672"
     networks:
       - service-net
+      - proxy
+    depends_on:
+      - logstash
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.rabbit.rule=Host(`rabbitmq.${DOMAIN}`)"
+      - "traefik.http.services.rabbit.loadbalancer.server.port=15672"
 
   exploits:
     image: explabs/ad-ctf-paas-exploits
@@ -68,6 +79,13 @@ services:
       - ./configs/config.yml:/service/config.yml
     networks:
       - service-net
+    extra_hosts:
+      - "naliway:172.17.0.1"
+    logging:
+      driver: gelf
+      options:
+        gelf-address: "udp://localhost:5044"
+        tag: "exploits"
 
   news:
     image: explabs/ad-ctf-paas-news
@@ -129,8 +147,6 @@ services:
     environment:
       MONGO_INITDB_ROOT_USERNAME: admin
       MONGO_INITDB_ROOT_PASSWORD: ${ADMIN_PASS}
-    volumes:
-      - mongo-data:/data/db
     networks:
       - service-net
 
@@ -138,8 +154,6 @@ services:
     image: redis:6.2-alpine
     container_name: redis
     command: redis-server --requirepass ${ADMIN_PASS}
-    volumes:
-      - redis-data:/data/
     networks:
       - service-net
 
@@ -185,10 +199,75 @@ services:
     restart: unless-stopped
     networks:
       - proxy
+  opensearch-node1:
+    image: opensearchproject/opensearch:1.2.4
+    container_name: opensearch-node1
+    environment:
+      - cluster.name=opensearch-cluster
+      - node.name=opensearch-node1
+      - discovery.seed_hosts=opensearch-node1,opensearch-node2
+      - cluster.initial_master_nodes=opensearch-node1,opensearch-node2
+      - bootstrap.memory_lock=true # along with the memlock settings below, disables swapping
+      - "OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m" # minimum and maximum Java heap size, recommend setting both to 50% of system RAM
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536 # maximum number of open files for the OpenSearch user, set to at least 65536 on modern systems
+        hard: 65536
+    networks:
+      - proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.opensearch.rule=Host(`opensearch.${DOMAIN}`)"
+      - "traefik.http.services.opensearch.loadbalancer.server.port=9200"
+  opensearch-node2:
+    image: opensearchproject/opensearch:1.2.4
+    container_name: opensearch-node2
+    environment:
+      - cluster.name=opensearch-cluster
+      - node.name=opensearch-node2
+      - discovery.seed_hosts=opensearch-node1,opensearch-node2
+      - cluster.initial_master_nodes=opensearch-node1,opensearch-node2
+      - bootstrap.memory_lock=true
+      - "OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
+    networks:
+      - proxy
 
-volumes:
-  mongo-data:
-  redis-data:
+  opensearch-dashboards:
+    image: opensearchproject/opensearch-dashboards:1.2.0
+    container_name: opensearch-dashboards
+    environment:
+      OPENSEARCH_HOSTS: '["https://opensearch-node1:9200","https://opensearch-node2:9200"]' # must be a string with no spaces when specified as an environment variable
+    networks:
+      - proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.dashboards.rule=Host(`dashboards.${DOMAIN}`)"
+      - "traefik.http.services.dashboards.loadbalancer.server.port=5601"
+
+  logstash:
+    container_name: logstash
+    image: opensearchproject/logstash-oss-with-opensearch-output-plugin:7.16.2
+    command: "logstash -f /usr/share/logstash/pipeline/logstash.conf --config.reload.automatic"
+    volumes:
+      - ./monitoring/logstash.conf:/usr/share/logstash/pipeline/logstash.conf:ro
+    ports:
+      - "127.0.0.1:5044:5044/udp"
+    environment:
+      LS_JAVA_OPTS: "-Xmx256m -Xms256m"
+    depends_on:
+      - opensearch-node1
+    networks:
+      - proxy
 
 networks:
   vpn-net:

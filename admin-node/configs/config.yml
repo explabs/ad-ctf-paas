@@ -8,7 +8,7 @@ checker:
   - name: ExampleTask
     cost: 3
     hp: 1000
-    script: example_task.py
+    script: example_service.py
 
 exploits:
   - name: ExampleTask
