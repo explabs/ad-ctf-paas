@@ -6,7 +6,7 @@ terraform.tfstate.backup
 data/
 server_rsa
 server_facts
-.env
+admin-node/.env
 .idea
 admin-node/monitoring/prometheus/prometheus.yml
 admin-node/monitoring/prometheus/data/*
