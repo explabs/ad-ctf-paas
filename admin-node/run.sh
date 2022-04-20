@@ -21,6 +21,10 @@ fi
 
 echo "admin password is '$ADMIN_PASS'"
 
+#for subdomain in api traefik vpn-admin fileserver malwaretotal
+#do
+#  sudo sh -c "echo \"127.0.0.1   $subdomain.potee.local\" >> /etc/hosts"
+#done
 cat << EOF > .env
 DOMAIN=$DOMAIN
 ADMIN_PASS=$ADMIN_PASS
@@ -30,4 +34,4 @@ TELEGRAM_TOKEN=$TELEGRAM_TOKEN
 TELEGRAM_CHAT_ID=$TELEGRAM_CHAT_ID
 EOF
 
-docker-compose -f docker-compose.defence.yml up -d
+docker-compose -f docker-compose.defence.yml up -d --build

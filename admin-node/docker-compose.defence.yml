@@ -37,6 +37,8 @@ services:
     volumes:
       - ./scripts/checkers/:/checker/scripts/
       - ./configs/config.yml:/checker/config.yml
+    extra_hosts:
+      - "naliway:172.17.0.1"
     networks:
       - service-net
     depends_on:
@@ -66,6 +68,8 @@ services:
     volumes:
       - ./scripts/exploits:/service/exploits/
       - ./configs/config.yml:/service/config.yml
+    extra_hosts:
+      - "naliway:172.17.0.1"
     networks:
       - service-net
 
@@ -97,7 +101,9 @@ services:
       - proxy
 
   api:
-    image: explabs/ad-ctf-paas-api
+    build:
+      context: ../../ad-ctf-paas-api/
+      dockerfile: dev.Dockerfile
     container_name: api
     environment:
       - ADMIN_PASS=${ADMIN_PASS}
@@ -106,10 +112,12 @@ services:
       - MONGODB=mongo:27017
       - REDIS=redis:6379
     volumes:
-      - ./configs/config.yml:/api/config.yml
+#      - ./configs/config.yml:/api/config.yml
+      - ../../ad-ctf-paas-api/:/api
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.api.rule=Host(`api.localhost`)"
+      - "traefik.http.routers.api.rule=Host(`api.${DOMAIN}`)"
+      - "traefik.http.services.api.loadbalancer.server.port=8080"
     depends_on:
       - mongo
       - redis
@@ -151,8 +159,9 @@ services:
       - NET_ADMIN
     volumes:
       - ./openvpn/setup/openvpn.conf:/etc/openvpn/setup/openvpn.conf
-      - ./openvpn/easyrsa_master:/etc/openvpn/easyrsa
-      - ./openvpn/ccd_master:/etc/openvpn/ccd
+      - ovpn-easyrsa:/etc/openvpn/easyrsa
+      - ovpn-ccd:/etc/openvpn/ccd
+      - ovpn-stats:/tmp/openvpn-status.log
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.ovpn-admin.rule=Host(`vpn-admin.${DOMAIN}`)"
@@ -165,14 +174,22 @@ services:
     networks:
       - vpn-net
 
+  openvpn-exporter:
+    image:  kumina/openvpn-exporter
+    command: -openvpn.status_paths /tmp/openvpn-status.log
+    ports:
+      - "9176:9176"
+    volumes:
+      - ovpn-stats:/tmp/openvpn-status.log
+
   ovpn-admin:
     image: flant/ovpn-admin:1.7.5
     container_name: ovpn-admin
     command: /app/ovpn-admin --listen.port="9000" --ovpn.server="openvpn.${DOMAIN}:1194:tcp" --easyrsa.path="/mnt/easyrsa" --easyrsa.index-path="/mnt/easyrsa/pki/index.txt" --ccd --ccd.path="/mnt/ccd" --auth.password --auth.db="/mnt/easyrsa/pki/users.db"
     network_mode: service:openvpn
     volumes:
-      - ./openvpn/easyrsa_master:/mnt/easyrsa
-      - ./openvpn/ccd_master:/mnt/ccd
+      - ovpn-easyrsa:/mnt/easyrsa
+      - ovpn-ccd:/mnt/ccd
 
   fileserver:
     image: explabs/fileserver
@@ -189,6 +206,9 @@ services:
 volumes:
   mongo-data:
   redis-data:
+  ovpn-ccd:
+  ovpn-easyrsa:
+  ovpn-stats:
 
 networks:
   vpn-net:
